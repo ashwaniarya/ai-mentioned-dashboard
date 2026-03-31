@@ -3,7 +3,7 @@
 import sqlite3
 import os
 
-DB_PATH = "mentions.db"
+DB_PATH = os.path.join(os.path.dirname(__file__), "mentions.db")
 SEED_PATH = os.path.join(os.path.dirname(__file__), "..", "seed_data.sql")
 
 

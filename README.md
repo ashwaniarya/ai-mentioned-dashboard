@@ -10,7 +10,7 @@ Build a small full-stack application that displays brand mentions collected from
 
 ## What You're Building
 
-An analytics dashboard for tracking how often a brand is mentioned across AI models (ChatGPT, Claude, Gemini, Perplexity). The seed database contains ~500 mention records.
+An analytics dashboard for tracking how often a brand is mentioned across AI models (ChatGPT, Claude, Gemini, Perplexity). The seed database contains ~10,000 mention records.
 
 ### Backend (Python / FastAPI)
 
@@ -97,6 +97,8 @@ Build a single dashboard page with:
 
 ## Getting Started
 
+> **Heads up:** Some dependencies or configurations in the scaffold may not work perfectly out of the box. Fixing these issues is part of the task — treat it like inheriting a real codebase.
+
 ### Backend
 ```bash
 cd backend
@@ -131,8 +133,12 @@ npm run dev
 
 ## Deliverables
 
-1. Push your code to this repo
-2. Include a brief `NOTES.md` with:
+1. Push your code to a **public GitHub repo**
+2. **Deploy the app** — host the frontend and backend wherever you want (Vercel, Railway, Fly.io, etc.)
+3. Send us:
+   - A link to your **repo**
+   - A link to the **live version** (no auth — we should be able to open it and use it immediately)
+4. Include a brief `NOTES.md` in the repo with:
    - Any trade-offs or shortcuts you made
    - What you'd improve with more time
    - How long you actually spent
