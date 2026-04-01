@@ -26,9 +26,15 @@ Create two Railway services, both connected to the same repo, each with the root
 | Variable        | Required | Description |
 | --------------- | -------- | ----------- |
 | `PORT`          | Yes      | Injected by Railway; used by uvicorn. |
-| `CORS_ORIGINS`  | Yes*     | Comma-separated browser origins allowed to call the API. Must include your frontend URL, e.g. `https://your-frontend.up.railway.app`. |
+| `CORS_ORIGINS`  | Yes*     | Comma-separated browser origins allowed to call the API. Must include your frontend URL, e.g. `https://your-frontend.up.railway.app` or `https://your-frontend.up.railway.app,https://admin.example.com`. |
 
 \*If unset, defaults in code are localhost only; production must set this to the real frontend origin(s).
+
+Railway example:
+
+```bash
+CORS_ORIGINS=https://your-frontend.up.railway.app,https://staging-frontend.up.railway.app
+```
 
 ### Frontend
 

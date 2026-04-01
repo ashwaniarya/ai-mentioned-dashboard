@@ -1,6 +1,9 @@
 """Smoke tests — hits the FastAPI app via httpx AsyncClient (no live server)."""
 
+import importlib
+
 import pytest
+from httpx import AsyncClient, ASGITransport
 
 
 # ── Health ──
@@ -11,6 +14,49 @@ async def test_health_returns_ok(client):
     response = await client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+@pytest.mark.asyncio
+async def test_cors_preflight_uses_configured_origins():
+    import config as config_module
+    import main as main_module
+
+    try:
+        with pytest.MonkeyPatch.context() as monkeypatch:
+            monkeypatch.setenv(
+                "CORS_ORIGINS",
+                "https://app.example.com, https://admin.example.com ,",
+            )
+            importlib.reload(config_module)
+            importlib.reload(main_module)
+
+            transport = ASGITransport(app=main_module.app)
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                allowed_response = await client.options(
+                    "/health",
+                    headers={
+                        "Origin": "https://admin.example.com",
+                        "Access-Control-Request-Method": "GET",
+                    },
+                )
+                blocked_response = await client.options(
+                    "/health",
+                    headers={
+                        "Origin": "https://unknown.example.com",
+                        "Access-Control-Request-Method": "GET",
+                    },
+                )
+    finally:
+        importlib.reload(config_module)
+        importlib.reload(main_module)
+
+    assert allowed_response.status_code == 200
+    assert (
+        allowed_response.headers["access-control-allow-origin"]
+        == "https://admin.example.com"
+    )
+    assert blocked_response.status_code == 400
+    assert "access-control-allow-origin" not in blocked_response.headers
 
 
 # ── POST /mentions — happy paths ──

@@ -5,7 +5,7 @@ from datetime import date
 from pydantic import ValidationError
 
 from models import MentionFilters, TrendsRequest, ErrorResponse
-from config import MAX_PAGE_SIZE
+from config import MAX_PAGE_SIZE, DEFAULT_CORS_ORIGINS, parse_configured_cors_origins
 
 
 # ── MentionFilters validation ──
@@ -37,6 +37,21 @@ def test_accepts_valid_model_literal():
 def test_parses_date_string_to_date_object():
     request = TrendsRequest(date_from="2025-01-15")
     assert request.date_from == date(2025, 1, 15)
+
+
+# ── Config parsing ──
+
+
+def test_cors_origins_parser_trims_whitespace_and_ignores_empty_values():
+    configured_origins = "https://app.example.com, https://admin.example.com ,"
+    assert parse_configured_cors_origins(configured_origins) == [
+        "https://app.example.com",
+        "https://admin.example.com",
+    ]
+
+
+def test_cors_origins_parser_uses_localhost_defaults_when_unset():
+    assert parse_configured_cors_origins(None) == DEFAULT_CORS_ORIGINS
 
 
 # ── Pagination offset math ──
