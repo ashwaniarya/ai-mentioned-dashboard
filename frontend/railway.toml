@@ -1,0 +1,9 @@
+# Railway: set this service Root Directory to "frontend" in the project dashboard.
+# Set NEXT_PUBLIC_API_URL to the backend public URL before build (Railway Variables).
+
+[build]
+builder = "RAILPACK"
+buildCommand = "npm ci && npm run build"
+
+[deploy]
+startCommand = "npx next start -H 0.0.0.0 -p $PORT"

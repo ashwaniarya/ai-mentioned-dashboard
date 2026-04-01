@@ -1,0 +1,11 @@
+# Railway: set this service Root Directory to "backend" in the project dashboard.
+# Seeding is intentionally not part of build or start; ship backend/mentions.db (tracked in git) or use a volume (see docs/railway.md).
+
+[build]
+builder = "RAILPACK"
+buildCommand = "pip install -r requirements.txt"
+
+[deploy]
+startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2 --log-level info --proxy-headers --forwarded-allow-ips '*' --timeout-keep-alive 65 --timeout-graceful-shutdown 30 --no-server-header"
+healthcheckPath = "/health"
+healthcheckTimeout = 120
