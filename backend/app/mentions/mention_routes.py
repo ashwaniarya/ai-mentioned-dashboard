@@ -73,25 +73,31 @@ async def mention_trends(
     session: AsyncSession = Depends(get_database_session),
 ):
     try:
+        filtered_mentions = build_mention_filters(
+            select(
+                MentionRecord.created_at.label("created_at"),
+                MentionRecord.mentioned.label("mentioned"),
+            ),
+            request.filters,
+        ).subquery()
+
         if request.group_by == "week":
-            date_column = func.strftime("%Y-W%W", MentionRecord.created_at)
+            date_column = func.strftime("%Y-W%W", filtered_mentions.c.created_at)
         else:
-            date_column = func.date(MentionRecord.created_at)
+            date_column = func.date(filtered_mentions.c.created_at)
 
         query = (
             select(
                 date_column.label("date"),
                 func.count().label("total"),
-                func.sum(case((MentionRecord.mentioned == True, 1), else_=0)).label("mentioned"),
+                func.sum(case((filtered_mentions.c.mentioned == True, 1), else_=0)).label(
+                    "mentioned"
+                ),
             )
+            .select_from(filtered_mentions)
             .group_by(date_column)
             .order_by(date_column.asc())
         )
-
-        if request.date_from is not None:
-            query = query.where(MentionRecord.created_at >= request.date_from.isoformat())
-        if request.date_to is not None:
-            query = query.where(MentionRecord.created_at <= request.date_to.isoformat() + " 23:59:59")
 
         result = await session.execute(query)
         rows = result.all()

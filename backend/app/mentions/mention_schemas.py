@@ -20,8 +20,7 @@ class MentionsRequest(BaseModel):
 
 
 class TrendsRequest(BaseModel):
-    date_from: Optional[date] = None
-    date_to: Optional[date] = None
+    filters: Optional[MentionFilters] = None
     group_by: Literal["day", "week"] = "day"
 
 

@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { MentionFilters, TrendPoint } from "@/models";
 import { brandMentionsApiService } from "@/services";
 import { TRENDS_DEFAULT_GROUP_BY } from "@/config";
+import { mentionFiltersForApiRequestBody } from "@/lib/validation";
 
 interface TrendChartProps {
   filtersForApi: MentionFilters;
@@ -102,11 +103,9 @@ function TrendChartPresentation({
 }
 
 export function TrendChart({ filtersForApi }: TrendChartProps) {
-  // Same resolved date range as the mentions table (`buildMentionFiltersForApi` on the parent).
   const trendsQuery = brandMentionsApiService.useTrends({
     group_by: TRENDS_DEFAULT_GROUP_BY,
-    date_from: filtersForApi.date_from,
-    date_to: filtersForApi.date_to,
+    filters: mentionFiltersForApiRequestBody(filtersForApi),
   });
 
   useEffect(() => {

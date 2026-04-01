@@ -218,11 +218,18 @@ async def test_mentions_future_dates_return_empty(client):
 # ── POST /mentions/trends ──
 
 
+def total_trend_count(points, key):
+    return sum(point[key] for point in points)
+
+
 @pytest.mark.asyncio
 async def test_trends_day_grouping(client):
     response = await client.post(
         "/mentions/trends",
-        json={"date_from": "2025-03-01", "date_to": "2025-03-05", "group_by": "day"},
+        json={
+            "group_by": "day",
+            "filters": {"date_from": "2025-03-01", "date_to": "2025-03-05"},
+        },
     )
     body = response.json()
     assert response.status_code == 200
@@ -237,7 +244,10 @@ async def test_trends_day_grouping(client):
 async def test_trends_week_grouping(client):
     response = await client.post(
         "/mentions/trends",
-        json={"date_from": "2025-03-01", "date_to": "2025-03-15", "group_by": "week"},
+        json={
+            "group_by": "week",
+            "filters": {"date_from": "2025-03-01", "date_to": "2025-03-15"},
+        },
     )
     body = response.json()
     assert response.status_code == 200
@@ -257,17 +267,111 @@ async def test_trends_no_date_filter(client):
 async def test_trends_future_dates_return_empty(client):
     response = await client.post(
         "/mentions/trends",
-        json={"date_from": "2099-01-01", "date_to": "2099-12-31", "group_by": "day"},
+        json={
+            "group_by": "day",
+            "filters": {"date_from": "2099-01-01", "date_to": "2099-12-31"},
+        },
     )
     assert response.status_code == 200
     assert response.json()["data"] == []
 
 
 @pytest.mark.asyncio
+async def test_trends_filter_by_model_matches_mentions_total(client):
+    filters = {"model": "chatgpt"}
+    trends_response = await client.post(
+        "/mentions/trends",
+        json={"group_by": "day", "filters": filters},
+    )
+    mentions_response = await client.post(
+        "/mentions",
+        json={"page": 1, "per_page": 5, "filters": filters},
+    )
+
+    assert trends_response.status_code == 200
+    assert mentions_response.status_code == 200
+    assert total_trend_count(trends_response.json()["data"], "total") == mentions_response.json()["total"]
+
+
+@pytest.mark.asyncio
+async def test_trends_filter_by_sentiment_matches_mentions_total(client):
+    filters = {"sentiment": "positive"}
+    trends_response = await client.post(
+        "/mentions/trends",
+        json={"group_by": "day", "filters": filters},
+    )
+    mentions_response = await client.post(
+        "/mentions",
+        json={"page": 1, "per_page": 5, "filters": filters},
+    )
+
+    assert trends_response.status_code == 200
+    assert mentions_response.status_code == 200
+    assert total_trend_count(trends_response.json()["data"], "total") == mentions_response.json()["total"]
+
+
+@pytest.mark.asyncio
+async def test_trends_filter_by_mentioned_matches_mentions_total(client):
+    filters = {"mentioned": True}
+    trends_response = await client.post(
+        "/mentions/trends",
+        json={"group_by": "day", "filters": filters},
+    )
+    mentions_response = await client.post(
+        "/mentions",
+        json={"page": 1, "per_page": 5, "filters": filters},
+    )
+    trend_points = trends_response.json()["data"]
+
+    assert trends_response.status_code == 200
+    assert mentions_response.status_code == 200
+    assert total_trend_count(trend_points, "total") == mentions_response.json()["total"]
+    assert total_trend_count(trend_points, "mentioned") == mentions_response.json()["total"]
+
+
+@pytest.mark.asyncio
+async def test_trends_combined_filters_match_mentions_total(client):
+    filters = {
+        "model": "chatgpt",
+        "sentiment": "positive",
+        "mentioned": True,
+        "date_from": "2025-01-01",
+        "date_to": "2025-03-31",
+    }
+    trends_response = await client.post(
+        "/mentions/trends",
+        json={"group_by": "day", "filters": filters},
+    )
+    mentions_response = await client.post(
+        "/mentions",
+        json={"page": 1, "per_page": 5, "filters": filters},
+    )
+
+    assert trends_response.status_code == 200
+    assert mentions_response.status_code == 200
+    assert total_trend_count(trends_response.json()["data"], "total") == mentions_response.json()["total"]
+
+
+@pytest.mark.asyncio
 async def test_trends_invalid_group_by_returns_422(client):
     response = await client.post(
         "/mentions/trends",
-        json={"date_from": "2025-01-01", "date_to": "2025-03-01", "group_by": "month"},
+        json={
+            "group_by": "month",
+            "filters": {"date_from": "2025-01-01", "date_to": "2025-03-01"},
+        },
+    )
+    assert response.status_code == 422
+    body = response.json()
+    assert body["error"] == "Validation error"
+    assert "detail" in body
+
+
+@pytest.mark.asyncio
+async def test_trends_invalid_nested_model_returns_422(client):
+    response = await client.post(
+        "/mentions/trends",
+        json={"group_by": "day", "filters": {"model": "nonexistent"}},
     )
     assert response.status_code == 422
     body = response.json()

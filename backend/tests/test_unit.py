@@ -31,12 +31,18 @@ def test_accepts_valid_model_literal():
     assert filters.model == "chatgpt"
 
 
-# ── TrendsRequest date parsing ──
+# ── TrendsRequest nested filters ──
 
 
 def test_parses_date_string_to_date_object():
-    request = TrendsRequest(date_from="2025-01-15")
-    assert request.date_from == date(2025, 1, 15)
+    request = TrendsRequest(filters={"date_from": "2025-01-15"})
+    assert request.filters is not None
+    assert request.filters.date_from == date(2025, 1, 15)
+
+
+def test_trends_request_rejects_invalid_nested_model():
+    with pytest.raises(ValidationError):
+        TrendsRequest(filters={"model": "gpt5"})
 
 
 # ── Config parsing ──

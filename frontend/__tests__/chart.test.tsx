@@ -23,6 +23,40 @@ describe("TrendChart", () => {
     vi.clearAllMocks();
   });
 
+  it("passes the full filter payload to useTrends", () => {
+    useTrendsMock.mockReturnValue({
+      data: { data: sampleTrends },
+      error: undefined,
+      isLoading: false,
+      isValidating: false,
+      mutate: vi.fn(),
+    } as ReturnType<typeof brandMentionsApiService.useTrends>);
+
+    render(
+      <TrendChart
+        filtersForApi={{
+          model: "chatgpt",
+          sentiment: "positive",
+          mentioned: true,
+          date_from: "2025-03-01",
+          date_to: "2025-03-31",
+          mention_date_range_preset: "last_30_days",
+        }}
+      />
+    );
+
+    expect(useTrendsMock).toHaveBeenCalledWith({
+      group_by: "day",
+      filters: {
+        model: "chatgpt",
+        sentiment: "positive",
+        mentioned: true,
+        date_from: "2025-03-01",
+        date_to: "2025-03-31",
+      },
+    });
+  });
+
   it("F10 — renders chart heading with data", () => {
     useTrendsMock.mockReturnValue({
       data: { data: sampleTrends },
@@ -33,7 +67,7 @@ describe("TrendChart", () => {
     } as ReturnType<typeof brandMentionsApiService.useTrends>);
 
     render(<TrendChart filtersForApi={{}} />);
-    expect(screen.getByText("Mention Trends")).toBeInTheDocument();
+    expect(screen.getAllByText("Mention Trends").length).toBeGreaterThan(0);
   });
 
   it("shows empty message when data is empty", () => {
