@@ -38,11 +38,11 @@ import {
 } from "@/constants/mentions-table.constants";
 import type { Mention, MentionFilters, MentionsResponse } from "@/models";
 import { brandMentionsApiService } from "@/services";
-import { mentionFiltersForApiRequestBody } from "@/lib/validation";
+import { mentionFiltersForApiRequestBody } from "@/lib/helpers/mention-filter-api";
 import {
   displayLabelForMentionModel,
   displayLabelForMentionSentiment,
-} from "@/lib/filters/mention-filter-label-helpers";
+} from "@/lib/helpers/mention-filter-label-helpers";
 import {
   DEFAULT_PAGE_SIZE,
 } from "@/config";

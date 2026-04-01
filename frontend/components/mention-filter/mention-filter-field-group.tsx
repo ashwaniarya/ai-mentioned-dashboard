@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { labelForValue } from "@/lib/filters/mention-filter-label-helpers";
+import { labelForValue } from "@/lib/helpers/mention-filter-label-helpers";
 import type { MentionFilters } from "@/models";
 
 interface MentionFilterFieldGroupProps {

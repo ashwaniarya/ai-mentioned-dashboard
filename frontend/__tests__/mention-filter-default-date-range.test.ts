@@ -5,7 +5,7 @@ import {
   getMentionDateRangeForMentionDateRangeRollingPreset,
   mentionFiltersShallowEqualForDashboard,
   normalizeDashboardMentionFiltersAfterParse,
-} from "@/lib/filters/mention-filter-default-date-range";
+} from "@/lib/helpers/mention-filter-default-date-range";
 import { MENTION_ROLLING_PRESET_DAY_COUNTS } from "@/config";
 import type { MentionRollingDateRangePreset } from "@/config";
 

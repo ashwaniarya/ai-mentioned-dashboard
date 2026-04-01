@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { DATE_PRESET } from "@/config";
-import { getDashboardBaselineMentionFilters } from "@/lib/filters/mention-filter-default-date-range";
+import { getDashboardBaselineMentionFilters } from "@/lib/helpers/mention-filter-default-date-range";
 import {
   getMentionFilterSummary,
   isMentionDateRangeActiveComparedToBaseline,
-} from "@/lib/filters/mention-filter-summary";
+} from "@/lib/helpers/mention-filter-summary";
 
 const dashboardBaselineMentionFilters = getDashboardBaselineMentionFilters();
 

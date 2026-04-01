@@ -14,7 +14,7 @@ import {
 import {
   mentionFiltersToSortedQueryString,
   parseMentionFiltersFromSearchParams,
-} from "@/lib/mention-filters-url";
+} from "@/lib/helpers/mention-filters-url";
 
 describe("parseMentionFiltersFromSearchParams", () => {
   it("parses known keys and ignores invalid values", () => {

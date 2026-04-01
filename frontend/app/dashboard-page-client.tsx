@@ -14,18 +14,18 @@ import { MentionFilterControl } from "@/components/mention-filter/mention-filter
 import { MentionsTable } from "@/components/mentions-table";
 import { TrendChart } from "@/components/trend-chart";
 import type { MentionFilters } from "@/models";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
-import { buildMentionFiltersForApi } from "@/lib/validation";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { buildMentionFiltersForApi } from "@/lib/helpers/mention-filter-api";
 import {
   getDashboardBaselineMentionFilters,
   mentionFiltersShallowEqualForDashboard,
   normalizeDashboardMentionFiltersAfterParse,
-} from "@/lib/filters/mention-filter-default-date-range";
+} from "@/lib/helpers/mention-filter-default-date-range";
 import {
   mentionFiltersToSortedQueryString,
   parseMentionFiltersFromSearchParams,
   sortedUrlSearchParamsString,
-} from "@/lib/mention-filters-url";
+} from "@/lib/helpers/mention-filters-url";
 import { MENTION_FILTER_DEBOUNCE_INTERVAL_MS } from "@/config";
 
 export function DashboardPageClient() {

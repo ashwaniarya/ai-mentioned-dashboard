@@ -3,7 +3,7 @@ import {
   buildMentionFiltersForApi,
   isMentionDateRangeOrderInvalid,
   mentionFiltersForApiRequestBody,
-} from "@/lib/validation";
+} from "@/lib/helpers/mention-filter-api";
 
 describe("isMentionDateRangeOrderInvalid", () => {
   it("returns false when either date is missing", () => {

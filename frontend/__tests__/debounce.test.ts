@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 describe("useDebouncedValue", () => {
   it("F7 — returns initial value immediately", () => {

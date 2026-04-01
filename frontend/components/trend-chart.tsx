@@ -27,7 +27,7 @@ import {
 import type { MentionFilters, TrendPoint } from "@/models";
 import { brandMentionsApiService } from "@/services";
 import { TRENDS_DEFAULT_GROUP_BY } from "@/config";
-import { mentionFiltersForApiRequestBody } from "@/lib/validation";
+import { mentionFiltersForApiRequestBody } from "@/lib/helpers/mention-filter-api";
 
 interface TrendChartProps {
   filtersForApi: MentionFilters;
