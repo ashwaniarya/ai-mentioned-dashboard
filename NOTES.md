@@ -31,7 +31,7 @@
 
 ## What I'd Improve With More Time
 
-I belive in pragmatic ittration. We can do many things but keeping things simple is important. Hence, these are few things we can do next.
+I believe in pragmatic iteration. We can do many things, but keeping things simple is important. Hence, these are a few things we can do next.
 
 ### Backend
 
@@ -44,14 +44,14 @@ I belive in pragmatic ittration. We can do many things but keeping things simple
 
 ### Frontend
 
-- **Global state management (Zustand): Important If, We an any new page** — Replace prop-threading of filter state from `dashboard-page-client.tsx` down to table/chart with a Zustand store. Each component subscribes to the slice it needs.
+- **Global state management (Zustand): Important if we add any new page** — Replace prop-threading of filter state from `dashboard-page-client.tsx` down to the table/chart with a Zustand store. Each component subscribes to the slice it needs.
 
 ### UI/UX
 
 - Add sorting — click column headers to sort by that field
 - Add dark mode toggle
 - Add a summary stats row above the table (total mentions, mention rate %, top model)
-- **Mention Trend Chart improvements** — Current chart (`trend-chart.tsx`) is a basic Recharts AreaChart with default legend/tooltip. Improvements: We can given option to just load data focused on a period of time.
+- **Mention Trend Chart improvements** — The current chart (`trend-chart.tsx`) is a basic Recharts AreaChart with the default legend and tooltip. One improvement would be to give users an option to load data focused on a specific time period.
 
 
 ## Time Spent
