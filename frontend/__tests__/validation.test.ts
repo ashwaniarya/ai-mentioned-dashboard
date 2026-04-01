@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildMentionFiltersForApi,
   isMentionDateRangeOrderInvalid,
+  mentionFiltersForApiRequestBody,
 } from "@/lib/validation";
 
 describe("isMentionDateRangeOrderInvalid", () => {
@@ -53,7 +54,7 @@ describe("buildMentionFiltersForApi", () => {
     expect(buildMentionFiltersForApi(input)).toEqual(input);
   });
 
-  it("strips dates when order is invalid but keeps other fields", () => {
+  it("strips invalid date order and does not add dates when both end up missing", () => {
     expect(
       buildMentionFiltersForApi({
         model: "claude",
@@ -61,6 +62,45 @@ describe("buildMentionFiltersForApi", () => {
         date_from: "2025-12-31",
         date_to: "2025-01-01",
       })
-    ).toEqual({ model: "claude", sentiment: "positive" });
+    ).toEqual({
+      model: "claude",
+      sentiment: "positive",
+    });
+  });
+
+  it("omits date bounds when both dates are missing (maximum / unbounded)", () => {
+    expect(buildMentionFiltersForApi({})).toEqual({});
+    expect(
+      buildMentionFiltersForApi({
+        mention_date_range_preset: "maximum",
+      })
+    ).toEqual({});
+  });
+
+  it("strips client-only preset from the result", () => {
+    expect(
+      buildMentionFiltersForApi({
+        mention_date_range_preset: "last_7_days",
+        date_from: "2025-01-01",
+        date_to: "2025-01-31",
+      })
+    ).toEqual({ date_from: "2025-01-01", date_to: "2025-01-31" });
+  });
+
+  it("does not fill the missing side when only one date is set", () => {
+    expect(
+      buildMentionFiltersForApi({ date_from: "2025-06-01" })
+    ).toEqual({ date_from: "2025-06-01" });
+  });
+});
+
+describe("mentionFiltersForApiRequestBody", () => {
+  it("drops mention_date_range_preset so it is not sent as JSON", () => {
+    expect(
+      mentionFiltersForApiRequestBody({
+        model: "chatgpt",
+        mention_date_range_preset: "last_3_days",
+      })
+    ).toEqual({ model: "chatgpt" });
   });
 });
