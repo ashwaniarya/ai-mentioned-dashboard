@@ -179,6 +179,9 @@ async def test_mentions_invalid_model_returns_422(client):
         json={"page": 1, "per_page": 5, "filters": {"model": "nonexistent"}},
     )
     assert response.status_code == 422
+    body = response.json()
+    assert body["error"] == "Validation error"
+    assert "detail" in body
 
 
 @pytest.mark.asyncio
@@ -188,6 +191,9 @@ async def test_mentions_invalid_date_returns_422(client):
         json={"page": 1, "per_page": 5, "filters": {"date_from": "bad-date"}},
     )
     assert response.status_code == 422
+    body = response.json()
+    assert body["error"] == "Validation error"
+    assert "detail" in body
 
 
 # ── POST /mentions — empty result ──
@@ -264,3 +270,37 @@ async def test_trends_invalid_group_by_returns_422(client):
         json={"date_from": "2025-01-01", "date_to": "2025-03-01", "group_by": "month"},
     )
     assert response.status_code == 422
+    body = response.json()
+    assert body["error"] == "Validation error"
+    assert "detail" in body
+
+
+# ── AppApiException via global handler ──
+
+
+@pytest.mark.asyncio
+async def test_database_error_returns_503_error_response(client):
+    from sqlalchemy.exc import SQLAlchemyError
+    from unittest.mock import AsyncMock
+
+    from app.database import get_database_session
+    from main import app
+
+    async def broken_execute(*args, **kwargs):
+        raise SQLAlchemyError("connection refused")
+
+    async def broken_session():
+        session = AsyncMock()
+        session.execute = broken_execute
+        yield session
+
+    app.dependency_overrides[get_database_session] = broken_session
+    try:
+        response = await client.post("/mentions", json={"page": 1, "per_page": 5})
+    finally:
+        app.dependency_overrides.pop(get_database_session, None)
+
+    assert response.status_code == 503
+    body = response.json()
+    assert body["error"] == "Database unavailable"
+    assert "detail" in body

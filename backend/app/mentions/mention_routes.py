@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
 from sqlalchemy import select, func, case
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import MAX_PAGE_SIZE
 from app.database import get_database_session
+from app.exceptions import AppApiException
 from app.mentions.mention_filter_builder import build_mention_filters
 from app.mentions.mention_record import MentionRecord
 from app.mentions.mention_schemas import (
@@ -14,7 +15,6 @@ from app.mentions.mention_schemas import (
     TrendsRequest,
     TrendsResponse,
     TrendPoint,
-    ErrorResponse,
 )
 
 mention_router = APIRouter()
@@ -57,11 +57,14 @@ async def list_mentions(
 
         return MentionsResponse(data=mentions, total=total, page=page, per_page=per_page)
 
-    except Exception as exc:
-        return JSONResponse(
-            status_code=503,
-            content=ErrorResponse(error="Database error", detail=str(exc)).model_dump(),
+    except SQLAlchemyError:
+        raise AppApiException(
+            503,
+            "Database unavailable",
+            detail="list_mentions query failed",
         )
+    except Exception:
+        raise AppApiException(500, "Mentions query failed")
 
 
 @mention_router.post("/mentions/trends", response_model=TrendsResponse)
@@ -100,8 +103,11 @@ async def mention_trends(
 
         return TrendsResponse(data=trend_points)
 
-    except Exception as exc:
-        return JSONResponse(
-            status_code=503,
-            content=ErrorResponse(error="Database error", detail=str(exc)).model_dump(),
+    except SQLAlchemyError:
+        raise AppApiException(
+            503,
+            "Database unavailable",
+            detail="mention_trends query failed",
         )
+    except Exception:
+        raise AppApiException(500, "Trends query failed")
