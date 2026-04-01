@@ -9,7 +9,9 @@
 - **Pydantic Literal types** — Hardened request models with `Literal["chatgpt", "claude", ...]` so invalid filter values are rejected at the request parsing layer (422) rather than silently returning empty results.
 - **SWR over Redux** — Single dashboard page with client-side API fetching inside an App Router page shell. SWR handles caching, deduplication, and revalidation. No need for client-side global store.
 - **shadcn/ui** — Copy-paste component library gives polished UI out of the box (Table, Select, Badge, Skeleton, Card) without heavy dependencies.
-- **Debounced filter-driven refetches** — `MENTION_FILTER_DEBOUNCE_INTERVAL_MS` in `frontend/config` prevents request storms when users change multiple filters quickly. The dashboard fans out settled filter state into separate component-level requests rather than true HTTP batching: `/mentions` reacts to all filters, while `/mentions/trends` is currently date-range driven.
+- **Frontend page is intentionally not over-abstracted yet** — The dashboard page keeps the behavior close to where it is used, which makes AI-assisted changes easier right now because the main flow is visible in one place. As the page grows, this is still easy to refactor into reusable artifacts like hooks, smaller components, or other abstractions when the seams become clear.
+- **Canonical trends API contract** — I changed `/mentions/trends` from a date-only body to `{ group_by, filters }`. That is a deliberate breaking change for this assignment. The reason is semantic consistency: `/mentions` and `/mentions/trends` belong to the same resource family, so they should speak the same filter language instead of forcing the chart into a second mini-contract.
+- **Debounced filter-driven refetches** — `MENTION_FILTER_DEBOUNCE_INTERVAL_MS` in `frontend/config` prevents request storms when users change multiple filters quickly. The dashboard fans out settled filter state into separate component-level requests rather than true HTTP batching: both `/mentions` and `/mentions/trends` now react to the same normalized filter slice.
 - **Routes call the DB directly (no controller/service layer)** — For this small assignment, `mention_routes.py` runs the SQLAlchemy queries inline. In a larger API, a controller (or service) should sit between the HTTP route and persistence: the route handles request/response wiring; the controller owns the DB calls and returns data the route maps to Pydantic responses. That extraction is a short refactor when the surface area grows (e.g. move list/trends logic into `mentions_service.py` and pass `AsyncSession` in).
 
 ## Backend error handling
@@ -29,9 +31,10 @@
 
 ## Smoke tests (dashboard filters)
 
-1. Open the dashboard, change several filters quickly: Network should show debounced calls after the debounce window, not one per keystroke. `/mentions` should refetch for all filter changes; `/mentions/trends` currently refetches on date-range changes.
+1. Open the dashboard, change several filters quickly: Network should show debounced calls after the debounce window, not one per keystroke. `/mentions` and `/mentions/trends` should both refetch from the same filter state.
 2. Set **From** after **To**: inline error appears; requests should not send both contradictory dates (dates omitted until fixed).
-3. Scroll the page: header + filter bar stay sticky at the top.
+3. Set `model=chatgpt`, `sentiment=positive`, `mentioned=true`: the table should narrow to that slice, and the chart should move with it rather than staying broad.
+4. Scroll the page: header + filter bar stay sticky at the top.
 - **Server-rendered shell + client-side data fetching** — The App Router page shell is server-rendered, while dashboard data fetching happens in client components because it depends on user-controlled filter state. Pushing the data fetching into server components would add complexity without much benefit here.
 
 ## What I'd Improve With More Time
@@ -42,7 +45,6 @@
 - Add API response caching (ETags or Cache-Control)
 - **Folder structure** — Current backend is intentionally small and keeps most API code in `backend/app/mentions/`. With more time, I would split route, service, and data-access concerns more explicitly.
 - **PostgreSQL + migrations + query improvements** — Replace SQLite with PostgreSQL while keeping SQLAlchemy. Use Alembic for migrations. Replace SQLite-specific `func.strftime` week-grouping with native `DATE_TRUNC`. Add indexes on `created_at`, `model`, `sentiment`.
-- **Filter parity between table and chart** — `/mentions/trends` currently accepts only date filters. Extend it to support the same filter set as `/mentions` (`model`, `sentiment`, `mentioned`) so the chart and table stay in sync.
 - **API contract** — Auto-generate frontend TS types from the FastAPI OpenAPI spec (e.g. `openapi-typescript`). Currently `backend/app/mentions/mention_schemas.py` and `frontend/models/index.ts` are manually kept in sync with loose `string` types on the FE side.
 - **Structured error logging + client request id** — `AppApiException` is logged in the global handler; next step is a client-supplied request id header on each call, logged on success and failure, plus structured logs (e.g. `structlog`) for cross-service traces.
 

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MentionsTable } from "@/components/mentions-table";
-import type { Mention } from "@/models";
+import type { Mention, MentionsRequest } from "@/models";
 import { brandMentionsApiService } from "@/services";
 import { toast } from "sonner";
 
@@ -43,9 +43,26 @@ function mockMentionsReturn(overrides: Partial<ReturnType<typeof brandMentionsAp
   } as ReturnType<typeof brandMentionsApiService.useMentions>);
 }
 
+function makeUseMentionsResult(
+  overrides: Partial<ReturnType<typeof brandMentionsApiService.useMentions>>
+) {
+  return {
+    data: undefined,
+    error: undefined,
+    isLoading: false,
+    isValidating: false,
+    mutate: vi.fn(),
+    ...overrides,
+  } as ReturnType<typeof brandMentionsApiService.useMentions>;
+}
+
+function getPaginationButton(name: RegExp) {
+  return screen.getAllByRole("button", { name })[0];
+}
+
 describe("MentionsTable", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it("F8 — renders correct number of data rows", () => {
@@ -77,11 +94,7 @@ describe("MentionsTable", () => {
 
     render(<MentionsTable filtersForApi={{}} />);
 
-    const buttons = screen.getAllByRole("button");
-    const prevButton = buttons.find(
-      (b) => b.querySelector("svg.lucide-chevron-left") !== null
-    );
-    expect(prevButton).toBeDisabled();
+    expect(getPaginationButton(/previous page/i)).toBeDisabled();
   });
 
   it("F11 — Next button disabled on last page", () => {
@@ -91,11 +104,7 @@ describe("MentionsTable", () => {
 
     render(<MentionsTable filtersForApi={{}} />);
 
-    const buttons = screen.getAllByRole("button");
-    const nextButton = buttons.find(
-      (b) => b.querySelector("svg.lucide-chevron-right") !== null
-    );
-    expect(nextButton).toBeDisabled();
+    expect(getPaginationButton(/next page/i)).toBeDisabled();
   });
 
   it("shows loading skeletons when isLoading is true", () => {
@@ -109,9 +118,75 @@ describe("MentionsTable", () => {
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
-  it("shows failed state when the mentions request fails", () => {
+  it("keeps the previous rows visible while the next page is loading", async () => {
+    const pageOneMention = makeMention({ query_text: "page 1 query" });
+
+    useMentionsMock.mockImplementation((request: MentionsRequest) =>
+      request.page === 1
+        ? makeUseMentionsResult({
+            data: { data: [pageOneMention], total: 50, page: 1, per_page: 25 },
+          })
+        : makeUseMentionsResult({
+            data: undefined,
+            isLoading: true,
+          })
+    );
+
+    render(<MentionsTable filtersForApi={{}} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("page 1 query")).toBeInTheDocument();
+    });
+
+    fireEvent.click(getPaginationButton(/next page/i));
+
+    expect(screen.getAllByText("page 1 query").length).toBeGreaterThan(0);
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("mentions-table-loading-overlay")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("mentions-table-loading-spinner")
+      ).toBeInTheDocument();
+      expect(screen.getByText(/page 2 of 2/i)).toBeInTheDocument();
+    });
+  });
+
+  it("rolls back to the previous page and shows a toast when the next page fails", async () => {
+    const pageOneMention = makeMention({ query_text: "page 1 query" });
+
+    useMentionsMock.mockImplementation((request: MentionsRequest) =>
+      request.page === 1
+        ? makeUseMentionsResult({
+            data: { data: [pageOneMention], total: 50, page: 1, per_page: 25 },
+          })
+        : makeUseMentionsResult({
+            data: undefined,
+            error: new Error("Mentions API failed"),
+          })
+    );
+
+    render(<MentionsTable filtersForApi={{}} />);
+
+    fireEvent.click(getPaginationButton(/next page/i));
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/page 1 of 2/i).length).toBeGreaterThan(0);
+    });
+
+    expect(screen.getAllByText("page 1 query").length).toBeGreaterThan(0);
+    expect(
+      screen.queryByTestId("mentions-table-loading-overlay")
+    ).not.toBeInTheDocument();
+    expect(toastErrorMock).toHaveBeenCalledWith(
+      "Failed to load page 2. Restored page 1."
+    );
+  });
+
+  it("shows failed state when the initial mentions request fails", () => {
     mockMentionsReturn({
-      data: { data: [makeMention()], total: 1, page: 1, per_page: 25 },
+      data: undefined,
       error: new Error("Mentions API failed"),
     });
 

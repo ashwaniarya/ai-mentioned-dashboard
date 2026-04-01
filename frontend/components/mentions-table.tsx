@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import {
   useReactTable,
@@ -25,10 +25,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LoadingFade } from "@/components/ui/loading-fade";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, Loader2 } from "lucide-react";
 import {
   mentionsTableMentionedNoBadgeClassName,
   mentionsTableMentionedYesBadgeClassName,
@@ -37,7 +36,7 @@ import {
   mentionsTableSentimentChipClassNameBySentiment,
   type MentionsTablePageState,
 } from "@/constants/mentions-table.constants";
-import type { Mention, MentionFilters } from "@/models";
+import type { Mention, MentionFilters, MentionsResponse } from "@/models";
 import { brandMentionsApiService } from "@/services";
 import { mentionFiltersForApiRequestBody } from "@/lib/validation";
 import {
@@ -52,11 +51,21 @@ interface MentionsTableProps {
   filtersForApi: MentionFilters;
 }
 
+interface SuccessfulMentionsTableView {
+  filtersSerialized: string;
+  page: number;
+  perPage: number;
+  response: MentionsResponse;
+}
+
 const columnHelper = createColumnHelper<Mention>();
 
 export function MentionsTable({ filtersForApi }: MentionsTableProps) {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(DEFAULT_PAGE_SIZE);
+  const [lastSuccessfulTableView, setLastSuccessfulTableView] =
+    useState<SuccessfulMentionsTableView | null>(null);
+  const lastHandledFailedRequestKeyRef = useRef<string | null>(null);
 
   const filtersSerialized = useMemo(
     () => JSON.stringify(filtersForApi),
@@ -78,15 +87,97 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
     filters: requestFilters,
   });
 
-  useEffect(() => {
-    if (mentionsQuery.error) toast.error(mentionsQuery.error.message);
-  }, [mentionsQuery.error]);
+  const currentRequestKey = useMemo(
+    () => `${filtersSerialized}::${page}::${perPage}`,
+    [filtersSerialized, page, perPage]
+  );
 
-  const data = mentionsQuery.data?.data ?? [];
-  const total = mentionsQuery.data?.total ?? 0;
-  const pageState: MentionsTablePageState = mentionsQuery.isLoading
+  useEffect(() => {
+    const successfulResponse = mentionsQuery.data;
+    if (!successfulResponse || mentionsQuery.isLoading || mentionsQuery.error) return;
+
+    setLastSuccessfulTableView((previousTableView) => {
+      if (
+        previousTableView &&
+        previousTableView.filtersSerialized === filtersSerialized &&
+        previousTableView.page === page &&
+        previousTableView.perPage === perPage
+      ) {
+        return previousTableView;
+      }
+
+      return {
+        filtersSerialized,
+        page,
+        perPage,
+        response: successfulResponse,
+      };
+    });
+    lastHandledFailedRequestKeyRef.current = null;
+  }, [
+    mentionsQuery.data,
+    mentionsQuery.error,
+    mentionsQuery.isLoading,
+    filtersSerialized,
+    page,
+    perPage,
+  ]);
+
+  const isTableNavigationPending =
+    lastSuccessfulTableView !== null &&
+    lastSuccessfulTableView.filtersSerialized === filtersSerialized &&
+    (lastSuccessfulTableView.page !== page ||
+      lastSuccessfulTableView.perPage !== perPage);
+
+  const displayedResponse =
+    mentionsQuery.data ??
+    (isTableNavigationPending ? lastSuccessfulTableView?.response : undefined);
+
+  useEffect(() => {
+    if (!mentionsQuery.error) return;
+    if (lastHandledFailedRequestKeyRef.current === currentRequestKey) return;
+
+    if (isTableNavigationPending && lastSuccessfulTableView) {
+      lastHandledFailedRequestKeyRef.current = currentRequestKey;
+
+      const requestedPage = page;
+      const requestedPerPage = perPage;
+
+      setPage(lastSuccessfulTableView.page);
+      setPerPage(lastSuccessfulTableView.perPage);
+
+      if (requestedPage !== lastSuccessfulTableView.page) {
+        toast.error(
+          `Failed to load page ${requestedPage}. Restored page ${lastSuccessfulTableView.page}.`
+        );
+        return;
+      }
+
+      if (requestedPerPage !== lastSuccessfulTableView.perPage) {
+        toast.error("Failed to update rows. Restored the previous table view.");
+        return;
+      }
+    }
+
+    lastHandledFailedRequestKeyRef.current = currentRequestKey;
+    toast.error(mentionsQuery.error.message);
+  }, [
+    mentionsQuery.error,
+    currentRequestKey,
+    isTableNavigationPending,
+    lastSuccessfulTableView,
+    page,
+    perPage,
+  ]);
+
+  const data = displayedResponse?.data ?? [];
+  const total = displayedResponse?.total ?? 0;
+  const hasDisplayedResponse = displayedResponse !== undefined;
+  const isInitialLoad = mentionsQuery.isLoading && !hasDisplayedResponse;
+  const isOverlayLoading = mentionsQuery.isLoading && isTableNavigationPending;
+  const pageState: MentionsTablePageState = isInitialLoad
     ? mentionsTablePageStates.LOADING
-    : mentionsQuery.error
+    : mentionsQuery.error && !hasDisplayedResponse
       ? mentionsTablePageStates.FAILED
       : data.length === 0
         ? mentionsTablePageStates.EMPTY
@@ -213,27 +304,31 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
     },
   });
 
+  const tableHeader = (
+    <TableHeader>
+      {table.getHeaderGroups().map((headerGroup) => (
+        <TableRow
+          key={headerGroup.id}
+          className="border-b border-border/70 bg-muted/35 hover:bg-muted/35"
+        >
+          {headerGroup.headers.map((header) => (
+            <TableHead key={header.id}>
+              {flexRender(
+                header.column.columnDef.header,
+                header.getContext()
+              )}
+            </TableHead>
+          ))}
+        </TableRow>
+      ))}
+    </TableHeader>
+  );
+
   const loadingContent = (
     <>
       <CardContent className="p-0">
         <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                className="border-b border-border/70 bg-muted/35 hover:bg-muted/35"
-              >
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
+          {tableHeader}
           <TableBody>
             {Array.from({ length: perPage }).map((_, rowIndex) => (
               <TableRow key={`skeleton-${rowIndex}`}>
@@ -262,6 +357,21 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
     </>
   );
 
+  const tableLoadingOverlay = isOverlayLoading ? (
+    <div
+      data-testid="mentions-table-loading-overlay"
+      className="absolute inset-0 z-10 bg-background/45 backdrop-blur-sm"
+    >
+      <div className="flex h-full items-center justify-center p-4">
+        <Loader2
+          data-testid="mentions-table-loading-spinner"
+          aria-label="Loading page data"
+          className="size-8 animate-spin text-foreground/80"
+        />
+      </div>
+    </div>
+  ) : null;
+
   const pageContent =
     pageState === mentionsTablePageStates.EMPTY ? (
       <CardContent className="flex flex-col items-center justify-center bg-muted/20 py-14">
@@ -280,41 +390,28 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
       </CardContent>
     ) : (
       <>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow
-                  key={headerGroup.id}
-                  className="border-b border-border/70 bg-muted/35 hover:bg-muted/35"
-                >
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
+        <div className="relative">
+          <CardContent className="p-0">
+            <Table>
+              {tableHeader}
+              <TableBody>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+          {tableLoadingOverlay}
+        </div>
 
         <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
@@ -327,6 +424,7 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
               <Select
                 value={String(perPage)}
                 onValueChange={(val) => handlePerPageChange(Number(val))}
+                disabled={mentionsQuery.isLoading}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -347,16 +445,18 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
               <Button
                 variant="outline"
                 size="icon"
+                aria-label="Previous page"
                 onClick={() => handlePageChange(page - 1)}
-                disabled={page <= 1}
+                disabled={page <= 1 || mentionsQuery.isLoading}
               >
                 <ChevronLeft />
               </Button>
               <Button
                 variant="outline"
                 size="icon"
+                aria-label="Next page"
                 onClick={() => handlePageChange(page + 1)}
-                disabled={page >= totalPages}
+                disabled={page >= totalPages || mentionsQuery.isLoading}
               >
                 <ChevronRight />
               </Button>
@@ -371,12 +471,7 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
       <CardHeader>
         <CardTitle>Brand Mentions</CardTitle>
       </CardHeader>
-      <LoadingFade
-        isLoading={pageState === mentionsTablePageStates.LOADING}
-        loadingContent={loadingContent}
-      >
-        {pageContent}
-      </LoadingFade>
+      {pageState === mentionsTablePageStates.LOADING ? loadingContent : pageContent}
     </Card>
   );
 }
