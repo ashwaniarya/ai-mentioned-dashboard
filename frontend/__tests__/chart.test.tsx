@@ -1,0 +1,65 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { TrendChart } from "@/components/trend-chart";
+import type { TrendPoint } from "@/models";
+import { brandMentionsApiService } from "@/services";
+
+vi.mock("@/services", () => ({
+  brandMentionsApiService: {
+    useTrends: vi.fn(),
+  },
+}));
+
+const useTrendsMock = vi.mocked(brandMentionsApiService.useTrends);
+
+const sampleTrends: TrendPoint[] = [
+  { date: "2025-03-01", total: 50, mentioned: 20 },
+  { date: "2025-03-02", total: 60, mentioned: 25 },
+  { date: "2025-03-03", total: 40, mentioned: 15 },
+];
+
+describe("TrendChart", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("F10 — renders chart heading with data", () => {
+    useTrendsMock.mockReturnValue({
+      data: { data: sampleTrends },
+      error: undefined,
+      isLoading: false,
+      isValidating: false,
+      mutate: vi.fn(),
+    } as ReturnType<typeof brandMentionsApiService.useTrends>);
+
+    render(<TrendChart filtersForApi={{}} />);
+    expect(screen.getByText("Mention Trends")).toBeInTheDocument();
+  });
+
+  it("shows empty message when data is empty", () => {
+    useTrendsMock.mockReturnValue({
+      data: { data: [] },
+      error: undefined,
+      isLoading: false,
+      isValidating: false,
+      mutate: vi.fn(),
+    } as ReturnType<typeof brandMentionsApiService.useTrends>);
+
+    render(<TrendChart filtersForApi={{}} />);
+    expect(screen.getByText(/no trend data/i)).toBeInTheDocument();
+  });
+
+  it("shows skeleton when loading", () => {
+    useTrendsMock.mockReturnValue({
+      data: undefined,
+      error: undefined,
+      isLoading: true,
+      isValidating: false,
+      mutate: vi.fn(),
+    } as ReturnType<typeof brandMentionsApiService.useTrends>);
+
+    const { container } = render(<TrendChart filtersForApi={{}} />);
+    const skeletons = container.querySelectorAll('[class*="skeleton"], [data-slot="skeleton"]');
+    expect(skeletons.length).toBeGreaterThan(0);
+  });
+});

@@ -1,8 +1,7 @@
-// Types matching the backend API contract
-
 export interface MentionFilters {
   model?: "chatgpt" | "claude" | "gemini" | "perplexity";
   sentiment?: "positive" | "neutral" | "negative";
+  mentioned?: boolean;
   date_from?: string; // YYYY-MM-DD
   date_to?: string; // YYYY-MM-DD
 }
@@ -45,4 +44,9 @@ export interface TrendPoint {
 
 export interface TrendsResponse {
   data: TrendPoint[];
+}
+
+export interface ErrorResponse {
+  error: string;
+  detail?: string;
 }

@@ -1,30 +1,48 @@
 "use client";
 
-// TODO: Build a Brand Mentions Dashboard with:
-//
-// 1. A mentions table with pagination
-//    - Show: query_text, model, mentioned (yes/no), position, sentiment, citation_url, date
-//    - Paginate through results
-//
-// 2. Filter controls
-//    - Model dropdown (chatgpt, claude, gemini, perplexity)
-//    - Sentiment dropdown (positive, neutral, negative)
-//    - Date range inputs
-//
-// 3. A trend chart (line or bar)
-//    - Show total mentions vs. mentioned=true over time
-//    - Use recharts or any charting library
-//
-// 4. Loading and empty states
-//
-// API base URL: http://localhost:8000
-// See /lib/types.ts for request/response types
+import { useMemo, useState, useCallback } from "react";
+import { DashboardHeader } from "@/components/dashboard-header";
+import { MentionFilterControl } from "@/components/mention-filter-control";
+import { MentionsTable } from "@/components/mentions-table";
+import { TrendChart } from "@/components/trend-chart";
+import type { MentionFilters } from "@/models";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { buildMentionFiltersForApi } from "@/lib/validation";
+import { MENTION_FILTER_DEBOUNCE_INTERVAL_MS } from "@/config";
 
 export default function Dashboard() {
+  const [filters, setFilters] = useState<MentionFilters>({});
+
+  const debouncedFilters = useDebouncedValue(
+    filters,
+    MENTION_FILTER_DEBOUNCE_INTERVAL_MS
+  );
+
+  const filtersForApi = useMemo(
+    () => buildMentionFiltersForApi(debouncedFilters),
+    [debouncedFilters]
+  );
+
+  const handleFiltersChange = useCallback((newFilters: MentionFilters) => {
+    setFilters(newFilters);
+  }, []);
+
   return (
-    <main className="min-h-screen p-8">
-      <h1 className="text-2xl font-bold mb-6">Brand Mentions Dashboard</h1>
-      {/* Your implementation here */}
-    </main>
+    <>
+      <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <DashboardHeader />
+        <div className="mx-auto max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
+          <MentionFilterControl
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+          />
+        </div>
+      </div>
+      <main className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+        <TrendChart filtersForApi={filtersForApi} />
+
+        <MentionsTable filtersForApi={filtersForApi} />
+      </main>
+    </>
   );
 }
