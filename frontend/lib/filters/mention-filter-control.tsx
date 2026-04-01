@@ -262,7 +262,13 @@ export function MentionFilterControl({
           </Select>
         </div>
 
-        <div className="flex min-w-0 items-end">
+        <div className="min-w-0 space-y-1">
+          <div
+            aria-hidden="true"
+            className="text-xs font-medium text-muted-foreground opacity-0"
+          >
+            Reset
+          </div>
           <Button
             variant="outline"
             onClick={handleReset}

@@ -7,16 +7,32 @@
 - **Railway deployment keeps the seeded SQLite file in git** — To keep deployment simple for the task, `backend/mentions.db` is committed and shipped with the backend service. I am intentionally not using a Railway volume for this assignment, even though a volume would be the better long-term persistence option.
 - **Railway backend start command** — Current deploy uses `uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2 --log-level info --proxy-headers --forwarded-allow-ips '*' --timeout-keep-alive 65 --timeout-graceful-shutdown 30 --no-server-header`. For a more production-grade Python server after moving to Postgres, add `gunicorn` to `backend/requirements.txt` and use this command: `gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --graceful-timeout 30 --keep-alive 65 --access-logfile - --forwarded-allow-ips='*'`.
 - **Pydantic Literal types** — Hardened request models with `Literal["chatgpt", "claude", ...]` so invalid filter values are rejected at the request parsing layer (422) rather than silently returning empty results.
-- **SWR over Redux** — Single dashboard page with server-driven data. SWR handles caching, deduplication, and revalidation. No need for client-side global store.
+- **SWR over Redux** — Single dashboard page with client-side API fetching inside an App Router page shell. SWR handles caching, deduplication, and revalidation. No need for client-side global store.
 - **shadcn/ui** — Copy-paste component library gives polished UI out of the box (Table, Select, Badge, Skeleton, Card) without heavy dependencies.
-- **Debounced filters** — `MENTION_FILTER_DEBOUNCE_INTERVAL_MS` in `frontend/config` prevents request storms when users change multiple filters quickly.
+- **Debounced filter-driven refetches** — `MENTION_FILTER_DEBOUNCE_INTERVAL_MS` in `frontend/config` prevents request storms when users change multiple filters quickly. The dashboard fans out settled filter state into separate component-level requests rather than true HTTP batching: `/mentions` reacts to all filters, while `/mentions/trends` is currently date-range driven.
+- **Routes call the DB directly (no controller/service layer)** — For this small assignment, `mention_routes.py` runs the SQLAlchemy queries inline. In a larger API, a controller (or service) should sit between the HTTP route and persistence: the route handles request/response wiring; the controller owns the DB calls and returns data the route maps to Pydantic responses. That extraction is a short refactor when the surface area grows (e.g. move list/trends logic into `mentions_service.py` and pass `AsyncSession` in).
+
+## Backend error handling
+
+**Goal:** One JSON shape for every failure the dashboard cares about — `{ "error": string, "detail"?: string }` (`ErrorResponse`) — so the frontend can parse errors consistently (including 422 validation, which FastAPI would otherwise return as a different `detail` array shape).
+
+**How it fits together:**
+
+- **Global handlers** in `app/__init__.py` turn exceptions into that shape: `RequestValidationError` → 422 with a readable `detail` string; `AppApiException` → whatever status and messages the route attached.
+- **Per-route `try` / `except`** stays in the route on purpose. When something breaks, the first place you open in the codebase is the handler for that path (`list_mentions` vs `mention_trends`). Each block decides *what* went wrong (e.g. `SQLAlchemyError` vs a generic bug) and **raises `AppApiException`** with route-specific text (`detail` like `list_mentions query failed`). That keeps **localization of behaviour**: the route owns the story of that endpoint; the global layer only serializes and logs.
+
+**Why not put everything in one giant global catch?** A single catch-all hides *which* route or branch failed unless you add a lot of context plumbing. Letting each route raise its own `AppApiException` keeps **readability for debugging**: stack traces and log lines still point at the route file, and the `error` / `detail` fields tell you which operation failed without reading a shared mega-handler.
+
+**Pros:** Consistent API contract for the client; clear HTTP semantics (503 for DB layer, 500 for unexpected code paths in that route); easy to extend new routes the same way. **Cons:** Every new route should repeat the same `except` pattern until you extract a shared helper or service layer.
+
+**Client request ID (planned):** Later, the frontend should send a per-request id on every API call (standard header such as `X-Request-ID` or a team convention). The backend should read it, attach it to logs and error handling, and optionally return it on responses so a single id ties the browser Network panel to server logs. Not implemented in this task.
 
 ## Smoke tests (dashboard filters)
 
-1. Open the dashboard, change several filters quickly: Network should show batched `/mentions` and `/mentions/trends` calls after the debounce window, not one per keystroke.
+1. Open the dashboard, change several filters quickly: Network should show debounced calls after the debounce window, not one per keystroke. `/mentions` should refetch for all filter changes; `/mentions/trends` currently refetches on date-range changes.
 2. Set **From** after **To**: inline error appears; requests should not send both contradictory dates (dates omitted until fixed).
 3. Scroll the page: header + filter bar stay sticky at the top.
-- **No server components for data fetching** — The dashboard is fully client-rendered ("use client") since all data depends on user-controlled filter state. Server components would add complexity without benefit here.
+- **Server-rendered shell + client-side data fetching** — The App Router page shell is server-rendered, while dashboard data fetching happens in client components because it depends on user-controlled filter state. Pushing the data fetching into server components would add complexity without much benefit here.
 
 ## What I'd Improve With More Time
 
@@ -24,10 +40,11 @@
 
 - Add rate limiting on the API
 - Add API response caching (ETags or Cache-Control)
-- **Folder structure** — Current backend is 5 flat files in `backend/`. Split into `routes/`, `services/`, `schemas/`, `db/` layers.
-- **PostgreSQL + proper ORM** — Replace SQLite/aiosqlite with PostgreSQL. Use Alembic for migrations. Replace raw `func.strftime` week-grouping with native `DATE_TRUNC`. Add indexes on `created_at`, `model`, `sentiment`.
+- **Folder structure** — Current backend is intentionally small and keeps most API code in `backend/app/mentions/`. With more time, I would split route, service, and data-access concerns more explicitly.
+- **PostgreSQL + migrations + query improvements** — Replace SQLite with PostgreSQL while keeping SQLAlchemy. Use Alembic for migrations. Replace SQLite-specific `func.strftime` week-grouping with native `DATE_TRUNC`. Add indexes on `created_at`, `model`, `sentiment`.
+- **Filter parity between table and chart** — `/mentions/trends` currently accepts only date filters. Extend it to support the same filter set as `/mentions` (`model`, `sentiment`, `mentioned`) so the chart and table stay in sync.
 - **API contract** — Auto-generate frontend TS types from the FastAPI OpenAPI spec (e.g. `openapi-typescript`). Currently `backend/app/mentions/mention_schemas.py` and `frontend/models/index.ts` are manually kept in sync with loose `string` types on the FE side.
-- **Proper error logging** — Add structured logging (e.g. Python `logging` / `structlog`). Currently `main.py` catches exceptions but only returns them as HTTP responses — no server-side log trail for debugging or monitoring.
+- **Structured error logging + client request id** — `AppApiException` is logged in the global handler; next step is a client-supplied request id header on each call, logged on success and failure, plus structured logs (e.g. `structlog`) for cross-service traces.
 
 ### Frontend
 
