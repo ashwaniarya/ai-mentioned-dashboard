@@ -1,6 +1,7 @@
 import os
 
-DATABASE_PATH = os.path.join(os.path.dirname(__file__), "mentions.db")
+_BACKEND_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATABASE_PATH = os.path.join(_BACKEND_ROOT, "mentions.db")
 DATABASE_URL = f"sqlite+aiosqlite:///{DATABASE_PATH}"
 
 DEFAULT_CORS_ORIGINS = [

@@ -17,7 +17,7 @@ Create two Railway services, both connected to the same repo, each with the root
 
 - After changing [seed_data.sql](../seed_data.sql), regenerate locally: `cd backend && python seed_db.py`, then commit the updated `mentions.db`.
 
-**Alternative — volume:** mount a [Railway volume](https://docs.railway.com/reference/volumes) at the directory that contains `mentions.db` (same path as `DATABASE_PATH` in [backend/config.py](../backend/config.py)). Run `seed_db.py` once via Railway shell/CLI so the file exists on the volume; do not add seeding to build or start commands.
+**Alternative — volume:** mount a [Railway volume](https://docs.railway.com/reference/volumes) at the directory that contains `mentions.db` (same path as `DATABASE_PATH` in [backend/app/config.py](../backend/app/config.py)). Run `seed_db.py` once via Railway shell/CLI so the file exists on the volume; do not add seeding to build or start commands.
 
 ## Environment variables
 

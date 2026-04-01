@@ -4,8 +4,8 @@ import pytest
 from datetime import date
 from pydantic import ValidationError
 
-from models import MentionFilters, TrendsRequest, ErrorResponse
-from config import MAX_PAGE_SIZE, DEFAULT_CORS_ORIGINS, parse_configured_cors_origins
+from app.mentions.mention_schemas import MentionFilters, TrendsRequest, ErrorResponse
+from app.config import MAX_PAGE_SIZE, DEFAULT_CORS_ORIGINS, parse_configured_cors_origins
 
 
 # ── MentionFilters validation ──

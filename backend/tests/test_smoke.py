@@ -18,7 +18,8 @@ async def test_health_returns_ok(client):
 
 @pytest.mark.asyncio
 async def test_cors_preflight_uses_configured_origins():
-    import config as config_module
+    import app as app_root
+    import app.config as config_module
     import main as main_module
 
     try:
@@ -28,6 +29,7 @@ async def test_cors_preflight_uses_configured_origins():
                 "https://app.example.com, https://admin.example.com ,",
             )
             importlib.reload(config_module)
+            importlib.reload(app_root)
             importlib.reload(main_module)
 
             transport = ASGITransport(app=main_module.app)
@@ -48,6 +50,7 @@ async def test_cors_preflight_uses_configured_origins():
                 )
     finally:
         importlib.reload(config_module)
+        importlib.reload(app_root)
         importlib.reload(main_module)
 
     assert allowed_response.status_code == 200
