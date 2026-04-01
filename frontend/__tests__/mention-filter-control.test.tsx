@@ -7,7 +7,7 @@ import {
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { MentionFilterControl } from "@/lib/filters/mention-filter-control";
+import { MentionFilterControl } from "@/components/mention-filter/mention-filter-control";
 import { getDashboardBaselineMentionFilters } from "@/lib/filters/mention-filter-default-date-range";
 import type { MentionFilters } from "@/models";
 
