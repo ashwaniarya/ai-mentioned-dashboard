@@ -29,15 +29,9 @@
 
 **Client request ID (planned):** Later, the frontend should send a per-request id on every API call (standard header such as `X-Request-ID` or a team convention). The backend should read it, attach it to logs and error handling, and optionally return it on responses so a single id ties the browser Network panel to server logs. Not implemented in this task.
 
-## Smoke tests (dashboard filters)
-
-1. Open the dashboard, change several filters quickly: Network should show debounced calls after the debounce window, not one per keystroke. `/mentions` and `/mentions/trends` should both refetch from the same filter state.
-2. Set **From** after **To**: inline error appears; requests should not send both contradictory dates (dates omitted until fixed).
-3. Set `model=chatgpt`, `sentiment=positive`, `mentioned=true`: the table should narrow to that slice, and the chart should move with it rather than staying broad.
-4. Scroll the page: header + filter bar stay sticky at the top.
-- **Server-rendered shell + client-side data fetching** — The App Router page shell is server-rendered, while dashboard data fetching happens in client components because it depends on user-controlled filter state. Pushing the data fetching into server components would add complexity without much benefit here.
-
 ## What I'd Improve With More Time
+
+I belive in pragmatic ittration. We can do many things but keeping things simple is important. Hence, these are few things we can do next.
 
 ### Backend
 
@@ -50,19 +44,15 @@
 
 ### Frontend
 
-- Add E2E tests with Playwright
-- **Global state management (Zustand)** — Replace prop-threading of filter state from `dashboard-page-client.tsx` down to table/chart with a Zustand store. Each component subscribes to the slice it needs.
+- **Global state management (Zustand): Important If, We an any new page** — Replace prop-threading of filter state from `dashboard-page-client.tsx` down to table/chart with a Zustand store. Each component subscribes to the slice it needs.
 
 ### UI/UX
 
 - Add sorting — click column headers to sort by that field
 - Add dark mode toggle
 - Add a summary stats row above the table (total mentions, mention rate %, top model)
-- **Mention Trend Chart improvements** — Current chart (`trend-chart.tsx`) is a basic Recharts AreaChart with default legend/tooltip. Improvements:
-  - Brush component for date-range zoom/scrub
-  - Mention-rate % line overlay (mentioned/total) on a secondary Y-axis
-  - Custom styled tooltip showing total, mentioned, rate %
-  - Responsive height breakpoints for mobile
+- **Mention Trend Chart improvements** — Current chart (`trend-chart.tsx`) is a basic Recharts AreaChart with default legend/tooltip. Improvements: We can given option to just load data focused on a period of time.
+
 
 ## Time Spent
 
