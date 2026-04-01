@@ -107,7 +107,7 @@ describe("MentionsTable", () => {
     expect(getPaginationButton(/next page/i)).toBeDisabled();
   });
 
-  it("shows loading skeletons when isLoading is true", () => {
+  it("shows the initial loading display state when no response has arrived yet", () => {
     mockMentionsReturn({
       data: undefined,
       isLoading: true,
@@ -118,7 +118,7 @@ describe("MentionsTable", () => {
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
-  it("keeps the previous rows visible while the next page is loading", async () => {
+  it("shows the stale-data refetching display state while the next page is loading", async () => {
     const pageOneMention = makeMention({ query_text: "page 1 query" });
 
     useMentionsMock.mockImplementation((request: MentionsRequest) =>
@@ -184,7 +184,7 @@ describe("MentionsTable", () => {
     );
   });
 
-  it("shows failed state when the initial mentions request fails", () => {
+  it("shows the failed display state when the initial mentions request fails", () => {
     mockMentionsReturn({
       data: undefined,
       error: new Error("Mentions API failed"),

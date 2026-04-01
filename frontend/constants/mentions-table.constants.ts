@@ -1,14 +1,4 @@
-export const mentionsTablePageStates = {
-  LOADING: "LOADING",
-  EMPTY: "EMPTY",
-  FAILED: "FAILED",
-  DONE: "DONE",
-} as const;
-
-export type MentionsTablePageState =
-  (typeof mentionsTablePageStates)[keyof typeof mentionsTablePageStates];
-
-/** Filled sentiment chips: readable contrast, subtle border so they don’t look like flat stickers. */
+/** Filled sentiment chips: readable contrast, subtle border so they don't look like flat stickers. */
 export const mentionsTableSentimentChipClassNameBySentiment: Record<string, string> = {
   positive:
     "border border-emerald-500/30 bg-emerald-500/[0.12] text-emerald-900 dark:border-emerald-400/35 dark:bg-emerald-500/15 dark:text-emerald-200",

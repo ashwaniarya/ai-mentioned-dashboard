@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import { toast } from "sonner";
 import {
   useReactTable,
   getCoreRowModel,
@@ -32,307 +30,146 @@ import {
   mentionsTableMentionedNoBadgeClassName,
   mentionsTableMentionedYesBadgeClassName,
   mentionsTableModelNameBadgeClassName,
-  mentionsTablePageStates,
   mentionsTableSentimentChipClassNameBySentiment,
-  type MentionsTablePageState,
 } from "@/constants/mentions-table.constants";
-import type { Mention, MentionFilters, MentionsResponse } from "@/models";
-import { brandMentionsApiService } from "@/services";
-import { mentionFiltersForApiRequestBody } from "@/lib/helpers/mention-filter-api";
+import type { Mention, MentionFilters } from "@/models";
+import {
+  useMentionsTableData,
+  type MentionsTableViewState,
+} from "@/hooks/use-mentions-table-data";
 import {
   displayLabelForMentionModel,
   displayLabelForMentionSentiment,
 } from "@/lib/helpers/mention-filter-label-helpers";
-import {
-  DEFAULT_PAGE_SIZE,
-} from "@/config";
 
-interface MentionsTableProps {
-  filtersForApi: MentionFilters;
-}
-
-interface SuccessfulMentionsTableView {
-  filtersSerialized: string;
-  page: number;
-  perPage: number;
-  response: MentionsResponse;
-}
+// ── Column definitions (module-level, no per-render cost) ─────────────
 
 const columnHelper = createColumnHelper<Mention>();
 
-export function MentionsTable({ filtersForApi }: MentionsTableProps) {
-  const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(DEFAULT_PAGE_SIZE);
-  const [lastSuccessfulTableView, setLastSuccessfulTableView] =
-    useState<SuccessfulMentionsTableView | null>(null);
-  const lastHandledFailedRequestKeyRef = useRef<string | null>(null);
+const RESPONSIVE_COLUMN_CLASS_BY_ID: Record<string, string | undefined> = {
+  position: "hidden md:table-cell",
+  sentiment: "hidden sm:table-cell",
+  citation_url: "hidden md:table-cell",
+  created_at: "hidden sm:table-cell",
+};
 
-  const filtersSerialized = useMemo(
-    () => JSON.stringify(filtersForApi),
-    [filtersForApi]
-  );
+const PAGINATION_BUTTON_CLASS = "size-11 sm:size-8";
 
-  useEffect(() => {
-    setPage(1);
-  }, [filtersSerialized]);
-
-  const requestFilters = useMemo(
-    () => mentionFiltersForApiRequestBody(filtersForApi),
-    [filtersForApi]
-  );
-
-  const mentionsQuery = brandMentionsApiService.useMentions({
-    page,
-    per_page: perPage,
-    filters: requestFilters,
-  });
-
-  const currentRequestKey = useMemo(
-    () => `${filtersSerialized}::${page}::${perPage}`,
-    [filtersSerialized, page, perPage]
-  );
-
-  useEffect(() => {
-    const successfulResponse = mentionsQuery.data;
-    if (!successfulResponse || mentionsQuery.isLoading || mentionsQuery.error) return;
-
-    setLastSuccessfulTableView((previousTableView) => {
-      if (
-        previousTableView &&
-        previousTableView.filtersSerialized === filtersSerialized &&
-        previousTableView.page === page &&
-        previousTableView.perPage === perPage
-      ) {
-        return previousTableView;
-      }
-
-      return {
-        filtersSerialized,
-        page,
-        perPage,
-        response: successfulResponse,
-      };
-    });
-    lastHandledFailedRequestKeyRef.current = null;
-  }, [
-    mentionsQuery.data,
-    mentionsQuery.error,
-    mentionsQuery.isLoading,
-    filtersSerialized,
-    page,
-    perPage,
-  ]);
-
-  const isTableNavigationPending =
-    lastSuccessfulTableView !== null &&
-    lastSuccessfulTableView.filtersSerialized === filtersSerialized &&
-    (lastSuccessfulTableView.page !== page ||
-      lastSuccessfulTableView.perPage !== perPage);
-
-  const displayedResponse =
-    mentionsQuery.data ??
-    (isTableNavigationPending ? lastSuccessfulTableView?.response : undefined);
-
-  useEffect(() => {
-    if (!mentionsQuery.error) return;
-    if (lastHandledFailedRequestKeyRef.current === currentRequestKey) return;
-
-    if (isTableNavigationPending && lastSuccessfulTableView) {
-      lastHandledFailedRequestKeyRef.current = currentRequestKey;
-
-      const requestedPage = page;
-      const requestedPerPage = perPage;
-
-      setPage(lastSuccessfulTableView.page);
-      setPerPage(lastSuccessfulTableView.perPage);
-
-      if (requestedPage !== lastSuccessfulTableView.page) {
-        toast.error(
-          `Failed to load page ${requestedPage}. Restored page ${lastSuccessfulTableView.page}.`
-        );
-        return;
-      }
-
-      if (requestedPerPage !== lastSuccessfulTableView.perPage) {
-        toast.error("Failed to update rows. Restored the previous table view.");
-        return;
-      }
-    }
-
-    lastHandledFailedRequestKeyRef.current = currentRequestKey;
-    toast.error(mentionsQuery.error.message);
-  }, [
-    mentionsQuery.error,
-    currentRequestKey,
-    isTableNavigationPending,
-    lastSuccessfulTableView,
-    page,
-    perPage,
-  ]);
-
-  const data = displayedResponse?.data ?? [];
-  const total = displayedResponse?.total ?? 0;
-  const hasDisplayedResponse = displayedResponse !== undefined;
-  const isInitialLoad = mentionsQuery.isLoading && !hasDisplayedResponse;
-  const isOverlayLoading = mentionsQuery.isLoading && isTableNavigationPending;
-  const pageState: MentionsTablePageState = isInitialLoad
-    ? mentionsTablePageStates.LOADING
-    : mentionsQuery.error && !hasDisplayedResponse
-      ? mentionsTablePageStates.FAILED
-      : data.length === 0
-        ? mentionsTablePageStates.EMPTY
-        : mentionsTablePageStates.DONE;
-
-  const handlePageChange = useCallback((nextPage: number) => {
-    setPage(nextPage);
-  }, []);
-
-  const handlePerPageChange = useCallback((nextPerPage: number) => {
-    setPerPage(nextPerPage);
-    setPage(1);
-  }, []);
-
-  const totalPages = Math.max(1, Math.ceil(total / perPage));
-
-  const columns = useMemo(
-    () => [
-      columnHelper.accessor("query_text", {
-        header: "Query",
-        cell: (info) => (
-          <span
-            className="max-w-[200px] truncate block font-medium text-foreground"
-            title={info.getValue()}
-          >
-            {info.getValue()}
-          </span>
-        ),
-      }),
-      columnHelper.accessor("model", {
-        header: "Model",
-        cell: (info) => (
-          <Badge variant="outline" className={mentionsTableModelNameBadgeClassName}>
-            {displayLabelForMentionModel(info.getValue())}
-          </Badge>
-        ),
-      }),
-      columnHelper.accessor("mentioned", {
-        header: "Mentioned",
-        cell: (info) => (
-          <Badge
-            variant="outline"
-            className={
-              info.getValue()
-                ? mentionsTableMentionedYesBadgeClassName
-                : mentionsTableMentionedNoBadgeClassName
-            }
-          >
-            {info.getValue() ? "Yes" : "No"}
-          </Badge>
-        ),
-      }),
-      columnHelper.accessor("position", {
-        header: "Position",
-        cell: (info) => {
-          const val = info.getValue();
-          return val !== null ? (
-            <span className="font-mono tabular-nums text-muted-foreground">
-              #{val}
-            </span>
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          );
-        },
-      }),
-      columnHelper.accessor("sentiment", {
-        header: "Sentiment",
-        cell: (info) => {
-          const val = info.getValue();
-          if (!val) return "—";
-          const title = displayLabelForMentionSentiment(val);
-          return (
-            <Badge
-              variant="outline"
-              className={`border-transparent ${mentionsTableSentimentChipClassNameBySentiment[val] ?? "bg-muted text-muted-foreground"}`}
-            >
-              {title}
-            </Badge>
-          );
-        },
-      }),
-      columnHelper.accessor("citation_url", {
-        header: "Citation",
-        cell: (info) => {
-          const url = info.getValue();
-          if (!url) return "—";
-          return (
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-medium text-sky-700 underline-offset-2 hover:text-sky-800 hover:underline dark:text-sky-400 dark:hover:text-sky-300"
-            >
-              <ExternalLink className="size-3" />
-              Link
-            </a>
-          );
-        },
-      }),
-      columnHelper.accessor("created_at", {
-        header: "Date",
-        cell: (info) => (
-          <span className="text-muted-foreground tabular-nums">
-            {new Date(info.getValue()).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </span>
-        ),
-      }),
-    ],
-    []
-  );
-
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    manualPagination: true,
-    pageCount: totalPages,
-    state: {
-      pagination: { pageIndex: page - 1, pageSize: perPage },
+const mentionColumns = [
+  columnHelper.accessor("query_text", {
+    header: "Query",
+    cell: (info) => (
+      <span
+        className="block max-w-[140px] truncate font-medium text-foreground sm:max-w-[220px]"
+        title={info.getValue()}
+      >
+        {info.getValue()}
+      </span>
+    ),
+  }),
+  columnHelper.accessor("model", {
+    header: "Model",
+    cell: (info) => (
+      <Badge variant="outline" className={mentionsTableModelNameBadgeClassName}>
+        {displayLabelForMentionModel(info.getValue())}
+      </Badge>
+    ),
+  }),
+  columnHelper.accessor("mentioned", {
+    header: "Mentioned",
+    cell: (info) => (
+      <Badge
+        variant="outline"
+        className={
+          info.getValue()
+            ? mentionsTableMentionedYesBadgeClassName
+            : mentionsTableMentionedNoBadgeClassName
+        }
+      >
+        {info.getValue() ? "Yes" : "No"}
+      </Badge>
+    ),
+  }),
+  columnHelper.accessor("position", {
+    header: "Position",
+    cell: (info) => {
+      const val = info.getValue();
+      return val !== null ? (
+        <span className="font-mono tabular-nums text-muted-foreground">
+          #{val}
+        </span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      );
     },
-  });
-
-  const tableHeader = (
-    <TableHeader>
-      {table.getHeaderGroups().map((headerGroup) => (
-        <TableRow
-          key={headerGroup.id}
-          className="border-b border-border/70 bg-muted/35 hover:bg-muted/35"
+  }),
+  columnHelper.accessor("sentiment", {
+    header: "Sentiment",
+    cell: (info) => {
+      const val = info.getValue();
+      if (!val) return "—";
+      return (
+        <Badge
+          variant="outline"
+          className={`border-transparent ${mentionsTableSentimentChipClassNameBySentiment[val] ?? "bg-muted text-muted-foreground"}`}
         >
-          {headerGroup.headers.map((header) => (
-            <TableHead key={header.id}>
-              {flexRender(
-                header.column.columnDef.header,
-                header.getContext()
-              )}
-            </TableHead>
-          ))}
-        </TableRow>
-      ))}
-    </TableHeader>
-  );
+          {displayLabelForMentionSentiment(val)}
+        </Badge>
+      );
+    },
+  }),
+  columnHelper.accessor("citation_url", {
+    header: "Citation",
+    cell: (info) => {
+      const url = info.getValue();
+      if (!url) return "—";
+      return (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 font-medium text-sky-700 underline-offset-2 hover:text-sky-800 hover:underline dark:text-sky-400 dark:hover:text-sky-300"
+        >
+          <ExternalLink className="size-4" />
+          Link
+        </a>
+      );
+    },
+  }),
+  columnHelper.accessor("created_at", {
+    header: "Date",
+    cell: (info) => (
+      <span className="text-muted-foreground tabular-nums">
+        {new Date(info.getValue()).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })}
+      </span>
+    ),
+  }),
+];
 
-  const loadingContent = (
+// ── Co-located sub-components ─────────────────────────────────────────
+
+function MentionsTableSkeleton({
+  tableHeader,
+  columnCount,
+  rowCount,
+}: {
+  tableHeader: React.ReactNode;
+  columnCount: number;
+  rowCount: number;
+}) {
+  return (
     <>
       <CardContent className="p-0">
         <Table>
           {tableHeader}
           <TableBody>
-            {Array.from({ length: perPage }).map((_, rowIndex) => (
+            {Array.from({ length: rowCount }).map((_, rowIndex) => (
               <TableRow key={`skeleton-${rowIndex}`}>
-                {columns.map((_, colIndex) => (
+                {Array.from({ length: columnCount }).map((_, colIndex) => (
                   <TableCell key={colIndex}>
                     <Skeleton className="h-4 w-3/4" />
                   </TableCell>
@@ -356,8 +193,10 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
       </div>
     </>
   );
+}
 
-  const tableLoadingOverlay = isOverlayLoading ? (
+function RefetchingOverlay() {
+  return (
     <div
       data-testid="mentions-table-loading-overlay"
       className="absolute inset-0 z-10 bg-background/45 backdrop-blur-sm"
@@ -370,108 +209,210 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
         />
       </div>
     </div>
-  ) : null;
+  );
+}
 
-  const pageContent =
-    pageState === mentionsTablePageStates.EMPTY ? (
-      <CardContent className="flex flex-col items-center justify-center bg-muted/20 py-14">
-        <p className="text-sm text-muted-foreground">
-          No mentions match your filters.
-        </p>
-      </CardContent>
-    ) : pageState === mentionsTablePageStates.FAILED ? (
-      <CardContent className="flex flex-col items-center justify-center bg-muted/20 py-14">
-        <p className="text-sm font-medium text-foreground">
-          Unable to load brand mentions.
-        </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Please try again in a moment.
-        </p>
-      </CardContent>
-    ) : (
-      <>
-        <div className="relative">
-          <CardContent className="p-0">
-            <Table>
-              {tableHeader}
-              <TableBody>
-                {table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-          {tableLoadingOverlay}
+function MentionsTablePagination({
+  page,
+  perPage,
+  totalPages,
+  totalResults,
+  isRefetching,
+  onPageChange,
+  onPerPageChange,
+}: {
+  page: number;
+  perPage: number;
+  totalPages: number;
+  totalResults: number;
+  isRefetching: boolean;
+  onPageChange: (page: number) => void;
+  onPerPageChange: (perPage: number) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm text-muted-foreground">
+        {totalResults.toLocaleString()} total results
+      </p>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2">
+        <div className="flex items-center justify-between gap-3 sm:justify-start sm:gap-1.5">
+          <span className="text-sm text-muted-foreground">Rows</span>
+          <Select
+            value={String(perPage)}
+            onValueChange={(val) => onPerPageChange(Number(val))}
+            disabled={isRefetching}
+          >
+            <SelectTrigger className="min-h-11 w-20 sm:min-h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted-foreground">
-            {total.toLocaleString()} total results
-          </p>
-
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm text-muted-foreground">Rows</span>
-              <Select
-                value={String(perPage)}
-                onValueChange={(val) => handlePerPageChange(Number(val))}
-                disabled={mentionsQuery.isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <span className="text-sm text-muted-foreground">
-              Page {page} of {totalPages}
-            </span>
-
-            <div className="flex gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Previous page"
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page <= 1 || mentionsQuery.isLoading}
-              >
-                <ChevronLeft />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Next page"
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page >= totalPages || mentionsQuery.isLoading}
-              >
-                <ChevronRight />
-              </Button>
-            </div>
+        <div className="flex items-center justify-between gap-3 sm:justify-start">
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+          <div className="flex gap-2 sm:gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Previous page"
+              onClick={() => onPageChange(page - 1)}
+              disabled={page <= 1 || isRefetching}
+              className={PAGINATION_BUTTON_CLASS}
+            >
+              <ChevronLeft />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Next page"
+              onClick={() => onPageChange(page + 1)}
+              disabled={page >= totalPages || isRefetching}
+              className={PAGINATION_BUTTON_CLASS}
+            >
+              <ChevronRight />
+            </Button>
           </div>
         </div>
-      </>
-    );
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────
+
+interface MentionsTableProps {
+  filtersForApi: MentionFilters;
+}
+
+export function MentionsTable({ filtersForApi }: MentionsTableProps) {
+  const { viewState, page, perPage, totalPages, goToPage, changePerPage } =
+    useMentionsTableData(filtersForApi);
+
+  const rows = viewState.status === "ready" ? viewState.rows : [];
+
+  const table = useReactTable({
+    data: rows,
+    columns: mentionColumns,
+    getCoreRowModel: getCoreRowModel(),
+    manualPagination: true,
+    pageCount: totalPages,
+    state: { pagination: { pageIndex: page - 1, pageSize: perPage } },
+  });
+
+  const tableHeader = (
+    <TableHeader>
+      {table.getHeaderGroups().map((headerGroup) => (
+        <TableRow
+          key={headerGroup.id}
+          className="border-b border-border/70 bg-muted/35 hover:bg-muted/35"
+        >
+          {headerGroup.headers.map((header) => (
+            <TableHead
+              key={header.id}
+              className={RESPONSIVE_COLUMN_CLASS_BY_ID[header.column.id]}
+            >
+              {flexRender(
+                header.column.columnDef.header,
+                header.getContext()
+              )}
+            </TableHead>
+          ))}
+        </TableRow>
+      ))}
+    </TableHeader>
+  );
 
   return (
     <Card className="overflow-hidden border-border/80 shadow-sm">
       <CardHeader>
         <CardTitle>Brand Mentions</CardTitle>
       </CardHeader>
-      {pageState === mentionsTablePageStates.LOADING ? loadingContent : pageContent}
+      {renderBody(viewState)}
     </Card>
   );
+
+  function renderBody(state: MentionsTableViewState) {
+    switch (state.status) {
+      case "loading":
+        return (
+          <MentionsTableSkeleton
+            tableHeader={tableHeader}
+            columnCount={mentionColumns.length}
+            rowCount={perPage}
+          />
+        );
+
+      case "empty":
+        return (
+          <CardContent className="flex flex-col items-center justify-center bg-muted/20 py-14">
+            <p className="text-sm text-muted-foreground">
+              No mentions match your filters.
+            </p>
+          </CardContent>
+        );
+
+      case "error":
+        return (
+          <CardContent className="flex flex-col items-center justify-center bg-muted/20 py-14">
+            <p className="text-sm font-medium text-foreground">
+              Unable to load brand mentions.
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Please try again in a moment.
+            </p>
+          </CardContent>
+        );
+
+      case "ready":
+        return (
+          <>
+            <div className="relative">
+              <CardContent className="p-0">
+                <Table>
+                  {tableHeader}
+                  <TableBody>
+                    {table.getRowModel().rows.map((row) => (
+                      <TableRow key={row.id}>
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            className={
+                              RESPONSIVE_COLUMN_CLASS_BY_ID[cell.column.id]
+                            }
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+              {state.isRefetching && <RefetchingOverlay />}
+            </div>
+
+            <MentionsTablePagination
+              page={page}
+              perPage={perPage}
+              totalPages={totalPages}
+              totalResults={state.total}
+              isRefetching={state.isRefetching}
+              onPageChange={goToPage}
+              onPerPageChange={changePerPage}
+            />
+          </>
+        );
+    }
+  }
 }

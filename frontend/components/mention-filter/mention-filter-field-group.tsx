@@ -63,6 +63,8 @@ export function MentionFilterFieldGroup({
   onSentimentChange,
   onMentionedChange,
 }: MentionFilterFieldGroupProps) {
+  const mobileTouchTargetClassName = "min-h-11 sm:min-h-8";
+
   return (
     <>
       <MentionFilterField label="Date range">
@@ -75,7 +77,9 @@ export function MentionFilterFieldGroup({
             labelForValue(mentionFilterChoices.dateRange, value)
           }
         >
-          <SelectTrigger className="w-full min-w-0">
+          <SelectTrigger
+            className={`w-full min-w-0 ${mobileTouchTargetClassName}`}
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -94,6 +98,7 @@ export function MentionFilterFieldGroup({
           aria-invalid={dateRangeOrderInvalid}
           value={filters.date_from ?? ""}
           onChange={(event) => onDateFromInputChange(event.target.value)}
+          className={mobileTouchTargetClassName}
         />
       </MentionFilterField>
 
@@ -103,6 +108,7 @@ export function MentionFilterFieldGroup({
           aria-invalid={dateRangeOrderInvalid}
           value={filters.date_to ?? ""}
           onChange={(event) => onDateToInputChange(event.target.value)}
+          className={mobileTouchTargetClassName}
         />
       </MentionFilterField>
 
@@ -118,7 +124,9 @@ export function MentionFilterFieldGroup({
             labelForValue(mentionFilterChoices.model, value)
           }
         >
-          <SelectTrigger className="w-full min-w-0">
+          <SelectTrigger
+            className={`w-full min-w-0 ${mobileTouchTargetClassName}`}
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -145,7 +153,9 @@ export function MentionFilterFieldGroup({
             labelForValue(mentionFilterChoices.sentiment, value)
           }
         >
-          <SelectTrigger className="w-full min-w-0">
+          <SelectTrigger
+            className={`w-full min-w-0 ${mobileTouchTargetClassName}`}
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -176,7 +186,9 @@ export function MentionFilterFieldGroup({
             labelForValue(mentionFilterChoices.mentioned, value)
           }
         >
-          <SelectTrigger className="w-full min-w-0">
+          <SelectTrigger
+            className={`w-full min-w-0 ${mobileTouchTargetClassName}`}
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
