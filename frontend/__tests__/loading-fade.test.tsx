@@ -7,23 +7,13 @@ import { LoadingFade } from "@/components/ui/loading-fade";
 describe("LoadingFade", () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.stubGlobal(
-      "requestAnimationFrame",
-      ((callback: FrameRequestCallback) =>
-        window.setTimeout(() => callback(performance.now()), 16)) as typeof requestAnimationFrame
-    );
-    vi.stubGlobal(
-      "cancelAnimationFrame",
-      ((handle: number) => window.clearTimeout(handle)) as typeof cancelAnimationFrame
-    );
   });
 
   afterEach(() => {
     vi.useRealTimers();
-    vi.unstubAllGlobals();
   });
 
-  it("fades content in while fading the loader out", async () => {
+  it("keeps the loader mounted until the fade-out duration completes", async () => {
     const { rerender } = render(
       <LoadingFade
         isLoading
@@ -47,10 +37,6 @@ describe("LoadingFade", () => {
 
     expect(screen.getByText("Loading shell")).toBeInTheDocument();
     expect(screen.getByText("Loaded content")).toBeInTheDocument();
-
-    await act(async () => {
-      vi.advanceTimersByTime(16);
-    });
 
     const contentWrapper = screen.getByText("Loaded content").parentElement;
     expect(contentWrapper).toHaveClass("opacity-100");

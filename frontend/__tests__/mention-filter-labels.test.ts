@@ -5,12 +5,14 @@
  */
 import { describe, expect, it } from "vitest";
 import {
-  displayLabelForMentionModel,
-  displayLabelForMentionSentiment,
   MENTION_ROLLING_PRESET_DAY_COUNTS,
-  labelForValue,
   mentionFilterChoices,
 } from "@/config";
+import {
+  displayLabelForMentionModel,
+  displayLabelForMentionSentiment,
+  labelForValue,
+} from "@/lib/filters/mention-filter-label-helpers";
 
 describe("mentionFilterChoices.dateRange", () => {
   it("defines a non-empty label for every configured date-range preset", () => {

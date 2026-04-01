@@ -205,7 +205,7 @@ export function MentionFilterControl({
           onMentionedChange={(value) => updateFilter("mentioned", value)}
         />
 
-        <div className="min-w-0 space-y-1">
+        <div className="min-w-0 space-y-2 ">
           <div
             aria-hidden="true"
             className="text-xs font-medium text-muted-foreground opacity-0"

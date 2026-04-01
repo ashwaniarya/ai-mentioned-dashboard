@@ -2,12 +2,12 @@ import {
   DATE_PRESET,
   MENTIONED_VALUE,
   MOBILE_FILTER_SUMMARY_LABEL_LIMIT,
-  labelForValue,
   mentionFilterChoices,
 } from "@/config";
 import type { MentionDateRangePreset } from "@/config";
 import type { MentionFilters } from "@/models";
 
+import { labelForValue } from "./mention-filter-label-helpers";
 import { mentionFiltersShallowEqualForDashboard } from "./mention-filter-default-date-range";
 
 interface MentionFilterSummaryInput {

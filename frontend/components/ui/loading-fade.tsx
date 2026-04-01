@@ -18,77 +18,60 @@ function LoadingFade({
   children,
   className,
 }: LoadingFadeProps) {
-  const [shouldRenderOverlay, setShouldRenderOverlay] = useState(isLoading)
-  const [shouldRenderContent, setShouldRenderContent] = useState(!isLoading)
-  const [isOverlayVisible, setIsOverlayVisible] = useState(isLoading)
-  const [isContentVisible, setIsContentVisible] = useState(!isLoading)
-  const fadeTimeoutRef = useRef<number | null>(null)
-  const contentFadeFrameRef = useRef<number | null>(null)
+  const [hasLoadedContent, setHasLoadedContent] = useState(!isLoading)
+  const [isOverlayMounted, setIsOverlayMounted] = useState(isLoading)
+  const overlayHideTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
-    if (fadeTimeoutRef.current !== null) {
-      window.clearTimeout(fadeTimeoutRef.current)
-      fadeTimeoutRef.current = null
-    }
-    if (contentFadeFrameRef.current !== null) {
-      window.cancelAnimationFrame(contentFadeFrameRef.current)
-      contentFadeFrameRef.current = null
+    if (overlayHideTimeoutRef.current !== null) {
+      window.clearTimeout(overlayHideTimeoutRef.current)
+      overlayHideTimeoutRef.current = null
     }
 
     if (isLoading) {
-      setShouldRenderOverlay(true)
-      setIsOverlayVisible(true)
-      setIsContentVisible(false)
+      setIsOverlayMounted(true)
       return
     }
 
-    setShouldRenderContent(true)
-    setIsContentVisible(false)
-    setIsOverlayVisible(false)
-    contentFadeFrameRef.current = window.requestAnimationFrame(() => {
-      setIsContentVisible(true)
-      contentFadeFrameRef.current = null
-    })
-    fadeTimeoutRef.current = window.setTimeout(() => {
-      setShouldRenderOverlay(false)
-      fadeTimeoutRef.current = null
+    setHasLoadedContent(true)
+    overlayHideTimeoutRef.current = window.setTimeout(() => {
+      setIsOverlayMounted(false)
+      overlayHideTimeoutRef.current = null
     }, LOADER_FADE_DURATION_MS)
 
     return () => {
-      if (fadeTimeoutRef.current !== null) {
-        window.clearTimeout(fadeTimeoutRef.current)
-        fadeTimeoutRef.current = null
-      }
-      if (contentFadeFrameRef.current !== null) {
-        window.cancelAnimationFrame(contentFadeFrameRef.current)
-        contentFadeFrameRef.current = null
+      if (overlayHideTimeoutRef.current !== null) {
+        window.clearTimeout(overlayHideTimeoutRef.current)
+        overlayHideTimeoutRef.current = null
       }
     }
   }, [isLoading])
 
-  if (!shouldRenderContent && shouldRenderOverlay) {
+  if (!hasLoadedContent && isOverlayMounted) {
     return <div className={className}>{loadingContent}</div>
   }
 
   return (
     <div className={cn("relative", className)}>
-      <div
-        aria-busy={isLoading}
-        className={cn(
-          "transition-opacity ease-out motion-reduce:transition-none",
-          isContentVisible ? "opacity-100" : "opacity-0"
-        )}
-        style={{ transitionDuration: `${LOADER_FADE_DURATION_MS}ms` }}
-      >
-        {children}
-      </div>
-
-      {shouldRenderOverlay ? (
+      {hasLoadedContent ? (
         <div
-          aria-hidden={!isOverlayVisible}
+          aria-busy={isLoading}
+          className={cn(
+            "transition-opacity ease-out motion-reduce:transition-none",
+            isLoading ? "opacity-0" : "opacity-100"
+          )}
+          style={{ transitionDuration: `${LOADER_FADE_DURATION_MS}ms` }}
+        >
+          {children}
+        </div>
+      ) : null}
+
+      {isOverlayMounted ? (
+        <div
+          aria-hidden={!isLoading}
           className={cn(
             "absolute inset-0 transition-opacity ease-out motion-reduce:transition-none",
-            isOverlayVisible ? "opacity-100" : "pointer-events-none opacity-0"
+            isLoading ? "opacity-100" : "pointer-events-none opacity-0"
           )}
           style={{ transitionDuration: `${LOADER_FADE_DURATION_MS}ms` }}
         >

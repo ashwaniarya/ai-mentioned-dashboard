@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { MentionsTable } from "@/components/mentions-table";
 import type { Mention } from "@/models";
 import { brandMentionsApiService } from "@/services";
+import { toast } from "sonner";
 
 vi.mock("@/services", () => ({
   brandMentionsApiService: {
@@ -10,7 +11,14 @@ vi.mock("@/services", () => ({
   },
 }));
 
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+  },
+}));
+
 const useMentionsMock = vi.mocked(brandMentionsApiService.useMentions);
+const toastErrorMock = vi.mocked(toast.error);
 
 const makeMention = (overrides: Partial<Mention> = {}): Mention => ({
   id: crypto.randomUUID(),
@@ -99,5 +107,17 @@ describe("MentionsTable", () => {
     const { container } = render(<MentionsTable filtersForApi={{}} />);
     const skeletons = container.querySelectorAll('[class*="skeleton"], [data-slot="skeleton"]');
     expect(skeletons.length).toBeGreaterThan(0);
+  });
+
+  it("shows failed state when the mentions request fails", () => {
+    mockMentionsReturn({
+      data: { data: [makeMention()], total: 1, page: 1, per_page: 25 },
+      error: new Error("Mentions API failed"),
+    });
+
+    render(<MentionsTable filtersForApi={{}} />);
+
+    expect(screen.getByText(/unable to load brand mentions/i)).toBeInTheDocument();
+    expect(toastErrorMock).toHaveBeenCalledWith("Mentions API failed");
   });
 });

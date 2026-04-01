@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { TrendChart } from "@/components/trend-chart";
 import type { TrendPoint } from "@/models";
 import { brandMentionsApiService } from "@/services";
+import { toast } from "sonner";
 
 vi.mock("@/services", () => ({
   brandMentionsApiService: {
@@ -10,7 +11,14 @@ vi.mock("@/services", () => ({
   },
 }));
 
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+  },
+}));
+
 const useTrendsMock = vi.mocked(brandMentionsApiService.useTrends);
+const toastErrorMock = vi.mocked(toast.error);
 
 const sampleTrends: TrendPoint[] = [
   { date: "2025-03-01", total: 50, mentioned: 20 },
@@ -95,5 +103,20 @@ describe("TrendChart", () => {
     const { container } = render(<TrendChart filtersForApi={{}} />);
     const skeletons = container.querySelectorAll('[class*="skeleton"], [data-slot="skeleton"]');
     expect(skeletons.length).toBeGreaterThan(0);
+  });
+
+  it("shows failed state when the trends request fails", () => {
+    useTrendsMock.mockReturnValue({
+      data: { data: sampleTrends },
+      error: new Error("Trend API failed"),
+      isLoading: false,
+      isValidating: false,
+      mutate: vi.fn(),
+    } as ReturnType<typeof brandMentionsApiService.useTrends>);
+
+    render(<TrendChart filtersForApi={{}} />);
+
+    expect(screen.getByText(/unable to load mention trends/i)).toBeInTheDocument();
+    expect(toastErrorMock).toHaveBeenCalledWith("Trend API failed");
   });
 });

@@ -20,6 +20,10 @@ import {
 } from "@/components/ui/card";
 import { LoadingFade } from "@/components/ui/loading-fade";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  trendChartPageStates,
+  type TrendChartPageState,
+} from "@/constants/trend-chart.constants";
 import type { MentionFilters, TrendPoint } from "@/models";
 import { brandMentionsApiService } from "@/services";
 import { TRENDS_DEFAULT_GROUP_BY } from "@/config";
@@ -31,20 +35,29 @@ interface TrendChartProps {
 
 function TrendChartPresentation({
   data,
-  isLoading,
+  pageState,
 }: {
   data: TrendPoint[];
-  isLoading: boolean;
+  pageState: TrendChartPageState;
 }) {
   const loadingContent = (
     <Skeleton className="h-[280px] w-full rounded-lg" />
   );
 
-  const loadedContent =
-    data.length === 0 ? (
+  const pageContent =
+    pageState === trendChartPageStates.EMPTY ? (
       <div className="flex h-[280px] flex-col items-center justify-center rounded-lg bg-muted/20 py-14">
         <p className="text-sm text-muted-foreground">
           No trend data available
+        </p>
+      </div>
+    ) : pageState === trendChartPageStates.FAILED ? (
+      <div className="flex h-[280px] flex-col items-center justify-center rounded-lg bg-muted/20 py-14">
+        <p className="text-sm font-medium text-foreground">
+          Unable to load mention trends.
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Please try again in a moment.
         </p>
       </div>
     ) : (
@@ -104,8 +117,11 @@ function TrendChartPresentation({
         <CardTitle>Mention Trends</CardTitle>
       </CardHeader>
       <CardContent>
-        <LoadingFade isLoading={isLoading} loadingContent={loadingContent}>
-          {loadedContent}
+        <LoadingFade
+          isLoading={pageState === trendChartPageStates.LOADING}
+          loadingContent={loadingContent}
+        >
+          {pageContent}
         </LoadingFade>
       </CardContent>
     </Card>
@@ -117,6 +133,14 @@ export function TrendChart({ filtersForApi }: TrendChartProps) {
     group_by: TRENDS_DEFAULT_GROUP_BY,
     filters: mentionFiltersForApiRequestBody(filtersForApi),
   });
+  const data = trendsQuery.data?.data ?? [];
+  const pageState: TrendChartPageState = trendsQuery.isLoading
+    ? trendChartPageStates.LOADING
+    : trendsQuery.error
+      ? trendChartPageStates.FAILED
+      : data.length === 0
+        ? trendChartPageStates.EMPTY
+        : trendChartPageStates.DONE;
 
   useEffect(() => {
     if (trendsQuery.error) toast.error(trendsQuery.error.message);
@@ -124,8 +148,8 @@ export function TrendChart({ filtersForApi }: TrendChartProps) {
 
   return (
     <TrendChartPresentation
-      data={trendsQuery.data?.data ?? []}
-      isLoading={trendsQuery.isLoading}
+      data={data}
+      pageState={pageState}
     />
   );
 }

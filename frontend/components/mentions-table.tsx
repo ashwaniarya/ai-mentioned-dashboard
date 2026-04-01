@@ -29,13 +29,23 @@ import { LoadingFade } from "@/components/ui/loading-fade";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import {
+  mentionsTableMentionedNoBadgeClassName,
+  mentionsTableMentionedYesBadgeClassName,
+  mentionsTableModelNameBadgeClassName,
+  mentionsTablePageStates,
+  mentionsTableSentimentChipClassNameBySentiment,
+  type MentionsTablePageState,
+} from "@/constants/mentions-table.constants";
 import type { Mention, MentionFilters } from "@/models";
 import { brandMentionsApiService } from "@/services";
 import { mentionFiltersForApiRequestBody } from "@/lib/validation";
 import {
-  DEFAULT_PAGE_SIZE,
   displayLabelForMentionModel,
   displayLabelForMentionSentiment,
+} from "@/lib/filters/mention-filter-label-helpers";
+import {
+  DEFAULT_PAGE_SIZE,
 } from "@/config";
 
 interface MentionsTableProps {
@@ -43,25 +53,6 @@ interface MentionsTableProps {
 }
 
 const columnHelper = createColumnHelper<Mention>();
-
-/** Filled sentiment chips: readable contrast, subtle border so they don’t look like flat stickers. */
-const sentimentChipClassBySentiment: Record<string, string> = {
-  positive:
-    "border border-emerald-500/30 bg-emerald-500/[0.12] text-emerald-900 dark:border-emerald-400/35 dark:bg-emerald-500/15 dark:text-emerald-200",
-  neutral:
-    "border border-sky-500/30 bg-sky-500/[0.12] text-sky-950 dark:border-sky-400/30 dark:bg-sky-500/15 dark:text-sky-100",
-  negative:
-    "border border-rose-500/35 bg-rose-500/[0.12] text-rose-900 dark:border-rose-400/35 dark:bg-rose-500/15 dark:text-rose-200",
-};
-
-const modelNameBadgeClassName =
-  "border border-violet-500/25 bg-violet-500/[0.1] text-violet-950 dark:border-violet-400/30 dark:bg-violet-500/12 dark:text-violet-100";
-
-const mentionedYesBadgeClassName =
-  "border-emerald-500/40 bg-emerald-500/[0.1] text-emerald-900 dark:border-emerald-500/45 dark:bg-emerald-500/15 dark:text-emerald-200";
-
-const mentionedNoBadgeClassName =
-  "border-border/80 bg-muted/70 text-muted-foreground dark:bg-muted/50";
 
 export function MentionsTable({ filtersForApi }: MentionsTableProps) {
   const [page, setPage] = useState(1);
@@ -93,7 +84,13 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
 
   const data = mentionsQuery.data?.data ?? [];
   const total = mentionsQuery.data?.total ?? 0;
-  const isLoading = mentionsQuery.isLoading;
+  const pageState: MentionsTablePageState = mentionsQuery.isLoading
+    ? mentionsTablePageStates.LOADING
+    : mentionsQuery.error
+      ? mentionsTablePageStates.FAILED
+      : data.length === 0
+        ? mentionsTablePageStates.EMPTY
+        : mentionsTablePageStates.DONE;
 
   const handlePageChange = useCallback((nextPage: number) => {
     setPage(nextPage);
@@ -122,7 +119,7 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
       columnHelper.accessor("model", {
         header: "Model",
         cell: (info) => (
-          <Badge variant="outline" className={modelNameBadgeClassName}>
+          <Badge variant="outline" className={mentionsTableModelNameBadgeClassName}>
             {displayLabelForMentionModel(info.getValue())}
           </Badge>
         ),
@@ -134,8 +131,8 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
             variant="outline"
             className={
               info.getValue()
-                ? mentionedYesBadgeClassName
-                : mentionedNoBadgeClassName
+                ? mentionsTableMentionedYesBadgeClassName
+                : mentionsTableMentionedNoBadgeClassName
             }
           >
             {info.getValue() ? "Yes" : "No"}
@@ -164,7 +161,7 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
           return (
             <Badge
               variant="outline"
-              className={`border-transparent ${sentimentChipClassBySentiment[val] ?? "bg-muted text-muted-foreground"}`}
+              className={`border-transparent ${mentionsTableSentimentChipClassNameBySentiment[val] ?? "bg-muted text-muted-foreground"}`}
             >
               {title}
             </Badge>
@@ -265,11 +262,20 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
     </>
   );
 
-  const loadedContent =
-    data.length === 0 ? (
+  const pageContent =
+    pageState === mentionsTablePageStates.EMPTY ? (
       <CardContent className="flex flex-col items-center justify-center bg-muted/20 py-14">
         <p className="text-sm text-muted-foreground">
           No mentions match your filters.
+        </p>
+      </CardContent>
+    ) : pageState === mentionsTablePageStates.FAILED ? (
+      <CardContent className="flex flex-col items-center justify-center bg-muted/20 py-14">
+        <p className="text-sm font-medium text-foreground">
+          Unable to load brand mentions.
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Please try again in a moment.
         </p>
       </CardContent>
     ) : (
@@ -365,8 +371,11 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
       <CardHeader>
         <CardTitle>Brand Mentions</CardTitle>
       </CardHeader>
-      <LoadingFade isLoading={isLoading} loadingContent={loadingContent}>
-        {loadedContent}
+      <LoadingFade
+        isLoading={pageState === mentionsTablePageStates.LOADING}
+        loadingContent={loadingContent}
+      >
+        {pageContent}
       </LoadingFade>
     </Card>
   );

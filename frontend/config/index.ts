@@ -26,4 +26,3 @@ export const MENTION_FILTER_INVALID_DATE_RANGE_MESSAGE =
   "Start date must be on or before end date.";
 
 export * from "./mention-filter-labels";
-export * from "../lib/filters/mention-filter-label-helpers";

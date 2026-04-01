@@ -5,7 +5,6 @@ import type { ReactNode } from "react";
 import {
   FACET,
   MENTIONED_VALUE,
-  labelForValue,
   mentionFilterChoices,
 } from "@/config";
 import type { MentionDateRangePreset } from "@/config";
@@ -17,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { labelForValue } from "@/lib/filters/mention-filter-label-helpers";
 import type { MentionFilters } from "@/models";
 
 interface MentionFilterFieldGroupProps {
