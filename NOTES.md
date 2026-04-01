@@ -49,7 +49,7 @@ I believe in pragmatic iteration. We can do many things, but keeping things simp
 
 ### UI/UX
 
-- Add sorting — click column headers to sort by that field
+- Add sorting — click column headers to sort by that field on tables, better truncation on query.
 - Add dark mode toggle
 - Add a summary stats row above the table (total mentions, mention rate %, top model)
 - **Mention Trend Chart improvements** — The current chart (`trend-chart.tsx`) is a basic Recharts AreaChart with the default legend and tooltip. One improvement would be to give users an option to load data focused on a specific time period.
