@@ -123,7 +123,7 @@ export function MentionFilterControl({
           aria-expanded={isMobileFilterExpanded}
           aria-controls={mobileFilterPanelId}
           onClick={() => setIsMobileFilterExpanded((previous) => !previous)}
-          className="flex min-h-11 w-full items-start justify-between gap-3 rounded-xl border-border/70 px-3 py-3 text-left"
+          className="flex h-auto min-h-11 w-full items-start justify-between gap-3 whitespace-normal rounded-xl border-border/70 px-3 py-3 text-left"
         >
           <span className="flex min-w-0 items-start gap-2.5">
             <SlidersHorizontal className="mt-0.5 size-4 text-muted-foreground" />
