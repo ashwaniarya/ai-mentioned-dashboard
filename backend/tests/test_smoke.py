@@ -353,6 +353,29 @@ async def test_trends_combined_filters_match_mentions_total(client):
 
 
 @pytest.mark.asyncio
+async def test_trends_nested_filter_object_matches_mentions_total(client):
+    filters = {
+        "model": "chatgpt",
+        "sentiment": "positive",
+        "mentioned": True,
+        "date_from": "2025-01-15",
+        "date_to": "2025-01-31",
+    }
+    trends_response = await client.post(
+        "/mentions/trends",
+        json={"group_by": "day", "filters": filters},
+    )
+    mentions_response = await client.post(
+        "/mentions",
+        json={"page": 1, "per_page": 5, "filters": filters},
+    )
+
+    assert trends_response.status_code == 200
+    assert mentions_response.status_code == 200
+    assert total_trend_count(trends_response.json()["data"], "total") == mentions_response.json()["total"]
+
+
+@pytest.mark.asyncio
 async def test_trends_invalid_group_by_returns_422(client):
     response = await client.post(
         "/mentions/trends",

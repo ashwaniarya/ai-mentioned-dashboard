@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { LoadingFade } from "@/components/ui/loading-fade";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
@@ -215,26 +216,8 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
     },
   });
 
-  if (data.length === 0 && !isLoading) {
-    return (
-      <Card className="overflow-hidden border-border/80 shadow-sm">
-        <CardHeader>
-          <CardTitle>Brand Mentions</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center bg-muted/20 py-14">
-          <p className="text-sm text-muted-foreground">
-            No mentions match your filters.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="overflow-hidden border-border/80 shadow-sm">
-      <CardHeader>
-        <CardTitle>Brand Mentions</CardTitle>
-      </CardHeader>
+  const loadingContent = (
+    <>
       <CardContent className="p-0">
         <Table>
           <TableHeader>
@@ -255,79 +238,136 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
             ))}
           </TableHeader>
           <TableBody>
-            {isLoading
-              ? Array.from({ length: perPage }).map((_, rowIndex) => (
-                  <TableRow key={`skeleton-${rowIndex}`}>
-                    {columns.map((_, colIndex) => (
-                      <TableCell key={colIndex}>
-                        <Skeleton className="h-4 w-3/4" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              : table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
+            {Array.from({ length: perPage }).map((_, rowIndex) => (
+              <TableRow key={`skeleton-${rowIndex}`}>
+                {columns.map((_, colIndex) => (
+                  <TableCell key={colIndex}>
+                    <Skeleton className="h-4 w-3/4" />
+                  </TableCell>
                 ))}
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </CardContent>
 
       <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          {total.toLocaleString()} total results
-        </p>
-
+        <Skeleton className="h-4 w-28" />
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm text-muted-foreground">Rows</span>
-            <Select
-              value={String(perPage)}
-              onValueChange={(val) => handlePerPageChange(Number(val))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="25">25</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
-
+          <Skeleton className="h-9 w-28" />
+          <Skeleton className="h-4 w-24" />
           <div className="flex gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page <= 1}
-            >
-              <ChevronLeft />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page >= totalPages}
-            >
-              <ChevronRight />
-            </Button>
+            <Skeleton className="size-9 rounded-md" />
+            <Skeleton className="size-9 rounded-md" />
           </div>
         </div>
       </div>
+    </>
+  );
+
+  const loadedContent =
+    data.length === 0 ? (
+      <CardContent className="flex flex-col items-center justify-center bg-muted/20 py-14">
+        <p className="text-sm text-muted-foreground">
+          No mentions match your filters.
+        </p>
+      </CardContent>
+    ) : (
+      <>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow
+                  key={headerGroup.id}
+                  className="border-b border-border/70 bg-muted/35 hover:bg-muted/35"
+                >
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+
+        <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            {total.toLocaleString()} total results
+          </p>
+
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm text-muted-foreground">Rows</span>
+              <Select
+                value={String(perPage)}
+                onValueChange={(val) => handlePerPageChange(Number(val))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <span className="text-sm text-muted-foreground">
+              Page {page} of {totalPages}
+            </span>
+
+            <div className="flex gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page <= 1}
+              >
+                <ChevronLeft />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page >= totalPages}
+              >
+                <ChevronRight />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+
+  return (
+    <Card className="overflow-hidden border-border/80 shadow-sm">
+      <CardHeader>
+        <CardTitle>Brand Mentions</CardTitle>
+      </CardHeader>
+      <LoadingFade isLoading={isLoading} loadingContent={loadingContent}>
+        {loadedContent}
+      </LoadingFade>
     </Card>
   );
 }

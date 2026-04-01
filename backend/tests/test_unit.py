@@ -34,15 +34,37 @@ def test_accepts_valid_model_literal():
 # ── TrendsRequest nested filters ──
 
 
-def test_parses_date_string_to_date_object():
-    request = TrendsRequest(filters={"date_from": "2025-01-15"})
+def test_trends_request_accepts_valid_nested_filters():
+    request = TrendsRequest(
+        filters={
+            "model": "chatgpt",
+            "sentiment": "positive",
+            "mentioned": True,
+            "date_from": "2025-01-15",
+            "date_to": "2025-01-31",
+        }
+    )
+
     assert request.filters is not None
+    assert request.filters.model == "chatgpt"
+    assert request.filters.sentiment == "positive"
+    assert request.filters.mentioned is True
     assert request.filters.date_from == date(2025, 1, 15)
+    assert request.filters.date_to == date(2025, 1, 31)
 
 
-def test_trends_request_rejects_invalid_nested_model():
+@pytest.mark.parametrize(
+    "invalid_filters",
+    [
+        {"model": "gpt5"},
+        {"sentiment": "angry"},
+        {"date_from": "nope"},
+        {"date_to": "also-nope"},
+    ],
+)
+def test_trends_request_rejects_invalid_nested_values(invalid_filters):
     with pytest.raises(ValidationError):
-        TrendsRequest(filters={"model": "gpt5"})
+        TrendsRequest(filters=invalid_filters)
 
 
 # ── Config parsing ──
