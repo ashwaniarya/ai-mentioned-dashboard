@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { TrendChart } from "@/components/trend-chart";
 import type { TrendPoint } from "@/models";
 import { brandMentionsApiService } from "@/services";
@@ -26,9 +26,19 @@ const sampleTrends: TrendPoint[] = [
   { date: "2025-03-03", total: 40, mentioned: 15 },
 ];
 
+function setWindowWidth(width: number) {
+  Object.defineProperty(window, "innerWidth", {
+    configurable: true,
+    writable: true,
+    value: width,
+  });
+  window.dispatchEvent(new Event("resize"));
+}
+
 describe("TrendChart", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setWindowWidth(1024);
   });
 
   it("passes the full filter payload to useTrends", () => {
@@ -118,5 +128,23 @@ describe("TrendChart", () => {
 
     expect(screen.getByText(/unable to load mention trends/i)).toBeInTheDocument();
     expect(toastErrorMock).toHaveBeenCalledWith("Trend API failed");
+  });
+
+  it("uses a shorter legend label on mobile screens", async () => {
+    setWindowWidth(375);
+    useTrendsMock.mockReturnValue({
+      data: { data: sampleTrends },
+      error: undefined,
+      isLoading: false,
+      isValidating: false,
+      mutate: vi.fn(),
+    } as ReturnType<typeof brandMentionsApiService.useTrends>);
+
+    render(<TrendChart filtersForApi={{}} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Total")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Total Queries")).not.toBeInTheDocument();
   });
 });

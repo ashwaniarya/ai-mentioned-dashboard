@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-import { toast } from "sonner";
 import {
   AreaChart,
   Area,
@@ -10,7 +8,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
 import {
   Card,
@@ -20,68 +17,140 @@ import {
 } from "@/components/ui/card";
 import { LoadingFade } from "@/components/ui/loading-fade";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  trendChartPageStates,
-  type TrendChartPageState,
-} from "@/constants/trend-chart.constants";
 import type { MentionFilters, TrendPoint } from "@/models";
-import { brandMentionsApiService } from "@/services";
-import { TRENDS_DEFAULT_GROUP_BY } from "@/config";
-import { mentionFiltersForApiRequestBody } from "@/lib/helpers/mention-filter-api";
+import { useCompactTrendChartLayout } from "@/hooks/use-compact-trend-chart-layout";
+import {
+  useTrendChartData,
+  type TrendChartViewState,
+} from "@/hooks/use-trend-chart-data";
 
 interface TrendChartProps {
   filtersForApi: MentionFilters;
 }
 
-function TrendChartPresentation({
-  data,
-  pageState,
-}: {
-  data: TrendPoint[];
-  pageState: TrendChartPageState;
-}) {
-  const loadingContent = (
-    <Skeleton className="h-[280px] w-full rounded-lg" />
-  );
+const TREND_CHART_HEIGHT_PX = 280;
+const MOBILE_TREND_CHART_Y_AXIS_WIDTH_PX = 32;
+const DESKTOP_TREND_CHART_Y_AXIS_WIDTH_PX = 40;
+const MOBILE_TOTAL_SERIES_LABEL = "Total";
+const TOTAL_SERIES_LABEL = "Total Queries";
+const MENTIONED_SERIES_LABEL = "Mentioned";
 
-  const pageContent =
-    pageState === trendChartPageStates.EMPTY ? (
-      <div className="flex h-[280px] flex-col items-center justify-center rounded-lg bg-muted/20 py-14">
-        <p className="text-sm text-muted-foreground">
-          No trend data available
-        </p>
-      </div>
-    ) : pageState === trendChartPageStates.FAILED ? (
-      <div className="flex h-[280px] flex-col items-center justify-center rounded-lg bg-muted/20 py-14">
-        <p className="text-sm font-medium text-foreground">
-          Unable to load mention trends.
-        </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Please try again in a moment.
-        </p>
-      </div>
-    ) : (
-      <div className="h-[280px]">
+function formatTrendChartDate(dateValue: string, useCompactLabel: boolean) {
+  const parsedDate = new Date(dateValue);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return dateValue;
+  }
+
+  return parsedDate.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(useCompactLabel ? {} : { year: "numeric" }),
+  });
+}
+
+function TrendChartLegend({
+  useCompactTotalLabel,
+}: {
+  useCompactTotalLabel: boolean;
+}) {
+  const totalSeriesLabel = useCompactTotalLabel
+    ? MOBILE_TOTAL_SERIES_LABEL
+    : TOTAL_SERIES_LABEL;
+
+  return (
+    <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground sm:text-sm">
+      <span className="inline-flex items-center gap-2">
+        <span
+          aria-hidden="true"
+          className="size-2.5 rounded-full bg-[var(--color-chart-2)]"
+        />
+        <span>{totalSeriesLabel}</span>
+      </span>
+      <span className="inline-flex items-center gap-2">
+        <span
+          aria-hidden="true"
+          className="size-2.5 rounded-full bg-[var(--color-chart-1)]"
+        />
+        <span>{MENTIONED_SERIES_LABEL}</span>
+      </span>
+    </div>
+  );
+}
+
+function TrendChartBody({
+  points,
+  isCompactTrendChartLayout,
+}: {
+  points: TrendPoint[];
+  isCompactTrendChartLayout: boolean;
+}) {
+  return (
+    <>
+      <div style={{ height: TREND_CHART_HEIGHT_PX }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data}>
+          <AreaChart data={points}>
             <defs>
               <linearGradient id="gradientTotal" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-chart-2)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="var(--color-chart-2)" stopOpacity={0} />
+                <stop
+                  offset="5%"
+                  stopColor="var(--color-chart-2)"
+                  stopOpacity={0.3}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="var(--color-chart-2)"
+                  stopOpacity={0}
+                />
               </linearGradient>
-              <linearGradient id="gradientMentioned" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-chart-1)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="var(--color-chart-1)" stopOpacity={0} />
+              <linearGradient
+                id="gradientMentioned"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop
+                  offset="5%"
+                  stopColor="var(--color-chart-1)"
+                  stopOpacity={0.3}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="var(--color-chart-1)"
+                  stopOpacity={0}
+                />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
             <XAxis
               dataKey="date"
+              axisLine={false}
+              tickLine={false}
+              interval="preserveStartEnd"
+              minTickGap={isCompactTrendChartLayout ? 28 : 20}
+              tickMargin={8}
+              tickFormatter={(value) =>
+                formatTrendChartDate(value, isCompactTrendChartLayout)
+              }
               tick={{ fontSize: 12 }}
               className="text-muted-foreground"
             />
-            <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              width={
+                isCompactTrendChartLayout
+                  ? MOBILE_TREND_CHART_Y_AXIS_WIDTH_PX
+                  : DESKTOP_TREND_CHART_Y_AXIS_WIDTH_PX
+              }
+              tick={{ fontSize: 12 }}
+              className="text-muted-foreground"
+            />
             <Tooltip
+              labelFormatter={(value) =>
+                formatTrendChartDate(String(value), false)
+              }
               contentStyle={{
                 backgroundColor: "var(--color-popover)",
                 border: "1px solid var(--color-border)",
@@ -89,11 +158,14 @@ function TrendChartPresentation({
                 fontSize: "0.875rem",
               }}
             />
-            <Legend />
             <Area
               type="monotone"
               dataKey="total"
-              name="Total Queries"
+              name={
+                isCompactTrendChartLayout
+                  ? MOBILE_TOTAL_SERIES_LABEL
+                  : TOTAL_SERIES_LABEL
+              }
               stroke="var(--color-chart-2)"
               fill="url(#gradientTotal)"
               strokeWidth={2}
@@ -101,7 +173,7 @@ function TrendChartPresentation({
             <Area
               type="monotone"
               dataKey="mentioned"
-              name="Mentioned"
+              name={MENTIONED_SERIES_LABEL}
               stroke="var(--color-chart-1)"
               fill="url(#gradientMentioned)"
               strokeWidth={2}
@@ -109,7 +181,74 @@ function TrendChartPresentation({
           </AreaChart>
         </ResponsiveContainer>
       </div>
-    );
+      <TrendChartLegend
+        useCompactTotalLabel={isCompactTrendChartLayout}
+      />
+    </>
+  );
+}
+
+function TrendChartPresentation({
+  viewState,
+  isCompactTrendChartLayout,
+}: {
+  viewState: TrendChartViewState;
+  isCompactTrendChartLayout: boolean;
+}) {
+  const loadingContent = (
+    <Skeleton
+      className="w-full rounded-lg"
+      style={{ height: TREND_CHART_HEIGHT_PX }}
+    />
+  );
+
+  function renderMainContent() {
+    switch (viewState.status) {
+      case "empty":
+        return (
+          <div
+            className="flex flex-col items-center justify-center rounded-lg bg-muted/20 py-14"
+            style={{ height: TREND_CHART_HEIGHT_PX }}
+          >
+            <p className="text-sm text-muted-foreground">
+              No trend data available
+            </p>
+          </div>
+        );
+      case "error":
+        return (
+          <div
+            className="flex flex-col items-center justify-center rounded-lg bg-muted/20 py-14"
+            style={{ height: TREND_CHART_HEIGHT_PX }}
+          >
+            <p className="text-sm font-medium text-foreground">
+              Unable to load mention trends.
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Please try again in a moment.
+            </p>
+          </div>
+        );
+      case "loading":
+        return (
+          <TrendChartBody
+            points={viewState.points}
+            isCompactTrendChartLayout={isCompactTrendChartLayout}
+          />
+        );
+      case "ready":
+        return (
+          <TrendChartBody
+            points={viewState.points}
+            isCompactTrendChartLayout={isCompactTrendChartLayout}
+          />
+        );
+      default: {
+        const exhaustive: never = viewState;
+        return exhaustive;
+      }
+    }
+  }
 
   return (
     <Card className="overflow-hidden border-border/80 shadow-sm">
@@ -118,10 +257,10 @@ function TrendChartPresentation({
       </CardHeader>
       <CardContent>
         <LoadingFade
-          isLoading={pageState === trendChartPageStates.LOADING}
+          isLoading={viewState.status === "loading"}
           loadingContent={loadingContent}
         >
-          {pageContent}
+          {renderMainContent()}
         </LoadingFade>
       </CardContent>
     </Card>
@@ -129,27 +268,13 @@ function TrendChartPresentation({
 }
 
 export function TrendChart({ filtersForApi }: TrendChartProps) {
-  const trendsQuery = brandMentionsApiService.useTrends({
-    group_by: TRENDS_DEFAULT_GROUP_BY,
-    filters: mentionFiltersForApiRequestBody(filtersForApi),
-  });
-  const data = trendsQuery.data?.data ?? [];
-  const pageState: TrendChartPageState = trendsQuery.isLoading
-    ? trendChartPageStates.LOADING
-    : trendsQuery.error
-      ? trendChartPageStates.FAILED
-      : data.length === 0
-        ? trendChartPageStates.EMPTY
-        : trendChartPageStates.DONE;
-
-  useEffect(() => {
-    if (trendsQuery.error) toast.error(trendsQuery.error.message);
-  }, [trendsQuery.error]);
+  const { viewState } = useTrendChartData(filtersForApi);
+  const isCompactTrendChartLayout = useCompactTrendChartLayout();
 
   return (
     <TrendChartPresentation
-      data={data}
-      pageState={pageState}
+      viewState={viewState}
+      isCompactTrendChartLayout={isCompactTrendChartLayout}
     />
   );
 }
