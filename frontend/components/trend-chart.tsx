@@ -35,7 +35,7 @@ function TrendChartPresentation({
   isLoading: boolean;
 }) {
   return (
-    <Card>
+    <Card className="overflow-hidden border-border/80 shadow-sm">
       <CardHeader>
         <CardTitle>Mention Trends</CardTitle>
       </CardHeader>
@@ -43,7 +43,7 @@ function TrendChartPresentation({
         {isLoading ? (
           <Skeleton className="h-64 w-full rounded-lg" />
         ) : data.length === 0 ? (
-          <div className="flex h-64 items-center justify-center">
+          <div className="flex h-64 flex-col items-center justify-center rounded-lg bg-muted/20 py-14">
             <p className="text-sm text-muted-foreground">
               No trend data available
             </p>
@@ -102,6 +102,7 @@ function TrendChartPresentation({
 }
 
 export function TrendChart({ filtersForApi }: TrendChartProps) {
+  // Same resolved date range as the mentions table (`buildMentionFiltersForApi` on the parent).
   const trendsQuery = brandMentionsApiService.useTrends({
     group_by: TRENDS_DEFAULT_GROUP_BY,
     date_from: filtersForApi.date_from,

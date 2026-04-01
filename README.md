@@ -116,6 +116,8 @@ npm install
 npm run dev
 ```
 
+**Frontend source layout:** constants live in `frontend/config/`, API contract types in `frontend/models/`, data fetching in `frontend/services/` (barrel `services/index.ts`). Details: [docs/architecture.md](docs/architecture.md).
+
 ---
 
 ## What We're Evaluating

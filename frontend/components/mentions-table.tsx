@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import type { Mention, MentionFilters } from "@/models";
 import { brandMentionsApiService } from "@/services";
@@ -39,13 +39,24 @@ interface MentionsTableProps {
 
 const columnHelper = createColumnHelper<Mention>();
 
-const sentimentColorMap: Record<string, string> = {
+/** Filled sentiment chips: readable contrast, subtle border so they don’t look like flat stickers. */
+const sentimentChipClassBySentiment: Record<string, string> = {
   positive:
-    "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
+    "border border-emerald-500/30 bg-emerald-500/[0.12] text-emerald-900 dark:border-emerald-400/35 dark:bg-emerald-500/15 dark:text-emerald-200",
   neutral:
-    "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
-  negative: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+    "border border-sky-500/30 bg-sky-500/[0.12] text-sky-950 dark:border-sky-400/30 dark:bg-sky-500/15 dark:text-sky-100",
+  negative:
+    "border border-rose-500/35 bg-rose-500/[0.12] text-rose-900 dark:border-rose-400/35 dark:bg-rose-500/15 dark:text-rose-200",
 };
+
+const modelNameBadgeClassName =
+  "border border-violet-500/25 bg-violet-500/[0.1] text-violet-950 dark:border-violet-400/30 dark:bg-violet-500/12 dark:text-violet-100";
+
+const mentionedYesBadgeClassName =
+  "border-emerald-500/40 bg-emerald-500/[0.1] text-emerald-900 dark:border-emerald-500/45 dark:bg-emerald-500/15 dark:text-emerald-200";
+
+const mentionedNoBadgeClassName =
+  "border-border/80 bg-muted/70 text-muted-foreground dark:bg-muted/50";
 
 export function MentionsTable({ filtersForApi }: MentionsTableProps) {
   const [page, setPage] = useState(1);
@@ -95,7 +106,10 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
       columnHelper.accessor("query_text", {
         header: "Query",
         cell: (info) => (
-          <span className="max-w-[200px] truncate block" title={info.getValue()}>
+          <span
+            className="max-w-[200px] truncate block font-medium text-foreground"
+            title={info.getValue()}
+          >
             {info.getValue()}
           </span>
         ),
@@ -103,7 +117,7 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
       columnHelper.accessor("model", {
         header: "Model",
         cell: (info) => (
-          <Badge variant="secondary" className="capitalize">
+          <Badge variant="outline" className={modelNameBadgeClassName}>
             {info.getValue()}
           </Badge>
         ),
@@ -115,8 +129,8 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
             variant="outline"
             className={
               info.getValue()
-                ? "border-emerald-300 text-emerald-700 dark:border-emerald-700 dark:text-emerald-400"
-                : "border-red-300 text-red-700 dark:border-red-700 dark:text-red-400"
+                ? mentionedYesBadgeClassName
+                : mentionedNoBadgeClassName
             }
           >
             {info.getValue() ? "Yes" : "No"}
@@ -127,7 +141,13 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
         header: "Position",
         cell: (info) => {
           const val = info.getValue();
-          return val !== null ? `#${val}` : "—";
+          return val !== null ? (
+            <span className="font-mono tabular-nums text-muted-foreground">
+              #{val}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          );
         },
       }),
       columnHelper.accessor("sentiment", {
@@ -138,7 +158,7 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
           return (
             <Badge
               variant="outline"
-              className={`border-transparent ${sentimentColorMap[val] ?? ""}`}
+              className={`border-transparent capitalize ${sentimentChipClassBySentiment[val] ?? "bg-muted text-muted-foreground"}`}
             >
               {val}
             </Badge>
@@ -155,7 +175,7 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-primary hover:underline"
+              className="inline-flex items-center gap-1 font-medium text-sky-700 underline-offset-2 hover:text-sky-800 hover:underline dark:text-sky-400 dark:hover:text-sky-300"
             >
               <ExternalLink className="size-3" />
               Link
@@ -165,12 +185,15 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
       }),
       columnHelper.accessor("created_at", {
         header: "Date",
-        cell: (info) =>
-          new Date(info.getValue()).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          }),
+        cell: (info) => (
+          <span className="text-muted-foreground tabular-nums">
+            {new Date(info.getValue()).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
+        ),
       }),
     ],
     []
@@ -187,25 +210,14 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
     },
   });
 
-  if (isLoading) {
+  if (data.length === 0 && !isLoading) {
     return (
-      <Card>
-        <CardContent>
-          <div className="space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-10 w-full" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (data.length === 0) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <p className="text-muted-foreground text-sm">
+      <Card className="overflow-hidden border-border/80 shadow-sm">
+        <CardHeader>
+          <CardTitle>Brand Mentions</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center bg-muted/20 py-14">
+          <p className="text-sm text-muted-foreground">
             No mentions match your filters.
           </p>
         </CardContent>
@@ -214,12 +226,18 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
   }
 
   return (
-    <Card>
+    <Card className="overflow-hidden border-border/80 shadow-sm">
+      <CardHeader>
+        <CardTitle>Brand Mentions</CardTitle>
+      </CardHeader>
       <CardContent className="p-0">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow
+                key={headerGroup.id}
+                className="border-b border-border/70 bg-muted/35 hover:bg-muted/35"
+              >
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
                     {flexRender(
@@ -232,20 +250,33 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
+            {isLoading
+              ? Array.from({ length: perPage }).map((_, rowIndex) => (
+                  <TableRow key={`skeleton-${rowIndex}`}>
+                    {columns.map((_, colIndex) => (
+                      <TableCell key={colIndex}>
+                        <Skeleton className="h-4 w-3/4" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              : table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
                 ))}
-              </TableRow>
-            ))}
           </TableBody>
         </Table>
       </CardContent>
 
-      <div className="flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           {total.toLocaleString()} total results
         </p>

@@ -10,14 +10,31 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
-import type { MentionFilters } from "@/models";
+import type { MentionDateRangePreset, MentionFilters } from "@/models";
 import { isMentionDateRangeOrderInvalid } from "@/lib/validation";
+import {
+  getMentionDateRangeForMentionDateRangeRollingPreset,
+  mentionFiltersShallowEqualForDashboard,
+} from "@/lib/mention-filter-default-date-range";
 import { MENTION_FILTER_INVALID_DATE_RANGE_MESSAGE } from "@/config";
 
 export interface MentionFilterControlProps {
   filters: MentionFilters;
   onFiltersChange: (filters: MentionFilters) => void;
+  /** Default date range + cleared facet filters; used for Reset and disabled state. */
+  dashboardBaselineMentionFilters: MentionFilters;
 }
+
+const MENTION_DATE_RANGE_PRESET_SELECT_OPTIONS: {
+  value: MentionDateRangePreset;
+  label: string;
+}[] = [
+  { value: "last_3_days", label: "Last 3 days" },
+  { value: "last_7_days", label: "Last 7 days" },
+  { value: "last_30_days", label: "Last 30 days" },
+  { value: "maximum", label: "Maximum" },
+  { value: "custom", label: "Custom" },
+];
 
 const MODEL_OPTIONS = [
   { value: "all", label: "All Models" },
@@ -43,6 +60,7 @@ const MENTIONED_OPTIONS = [
 export function MentionFilterControl({
   filters,
   onFiltersChange,
+  dashboardBaselineMentionFilters,
 }: MentionFilterControlProps) {
   const updateFilter = <K extends keyof MentionFilters>(
     key: K,
@@ -51,19 +69,129 @@ export function MentionFilterControl({
     onFiltersChange({ ...filters, [key]: value });
   };
 
-  const handleReset = () => {
-    onFiltersChange({});
+  const handleMentionDateRangePresetSelectChange = (
+    value: MentionDateRangePreset | null
+  ) => {
+    if (value === null) return;
+    const preset = value;
+    const anchorDate = new Date();
+    if (preset === "maximum") {
+      onFiltersChange({
+        ...filters,
+        date_from: undefined,
+        date_to: undefined,
+        mention_date_range_preset: "maximum",
+      });
+      return;
+    }
+    if (preset === "custom") {
+      onFiltersChange({
+        ...filters,
+        mention_date_range_preset: "custom",
+      });
+      return;
+    }
+    if (
+      preset === "last_3_days" ||
+      preset === "last_7_days" ||
+      preset === "last_30_days"
+    ) {
+      const range = getMentionDateRangeForMentionDateRangeRollingPreset(
+        anchorDate,
+        preset
+      );
+      onFiltersChange({
+        ...filters,
+        ...range,
+        mention_date_range_preset: preset,
+      });
+    }
   };
 
-  const hasActiveFilters = Object.values(filters).some(
-    (v) => v !== undefined && v !== ""
+  const handleDateFromInputChange = (rawValue: string) => {
+    const dateFrom = rawValue || undefined;
+    const dateTo = filters.date_to;
+    const bothDateBoundsMissing = !dateFrom && !dateTo;
+    onFiltersChange({
+      ...filters,
+      date_from: dateFrom,
+      mention_date_range_preset: bothDateBoundsMissing ? "maximum" : "custom",
+    });
+  };
+
+  const handleDateToInputChange = (rawValue: string) => {
+    const dateTo = rawValue || undefined;
+    const dateFrom = filters.date_from;
+    const bothDateBoundsMissing = !dateFrom && !dateTo;
+    onFiltersChange({
+      ...filters,
+      date_to: dateTo,
+      mention_date_range_preset: bothDateBoundsMissing ? "maximum" : "custom",
+    });
+  };
+
+  const handleReset = () => {
+    onFiltersChange({ ...dashboardBaselineMentionFilters });
+  };
+
+  const hasActiveFilters = !mentionFiltersShallowEqualForDashboard(
+    filters,
+    dashboardBaselineMentionFilters
   );
 
   const dateRangeOrderInvalid = isMentionDateRangeOrderInvalid(filters);
 
+  const mentionDateRangePresetSelectValue =
+    filters.mention_date_range_preset ?? "maximum";
+
   return (
     <div className="w-full min-w-0">
-      <div className="grid grid-cols-3 gap-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+        <div className="min-w-0 space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">
+            Date range
+          </label>
+          <Select
+            value={mentionDateRangePresetSelectValue}
+            onValueChange={handleMentionDateRangePresetSelectChange}
+          >
+            <SelectTrigger className="w-full min-w-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MENTION_DATE_RANGE_PRESET_SELECT_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="min-w-0 space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">
+            From
+          </label>
+          <Input
+            type="date"
+            aria-invalid={dateRangeOrderInvalid}
+            value={filters.date_from ?? ""}
+            onChange={(e) => handleDateFromInputChange(e.target.value)}
+          />
+        </div>
+
+        <div className="min-w-0 space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">
+            To
+          </label>
+          <Input
+            type="date"
+            aria-invalid={dateRangeOrderInvalid}
+            value={filters.date_to ?? ""}
+            onChange={(e) => handleDateToInputChange(e.target.value)}
+          />
+        </div>
+
         <div className="min-w-0 space-y-1">
           <label className="text-xs font-medium text-muted-foreground">
             Model
@@ -148,34 +276,6 @@ export function MentionFilterControl({
               ))}
             </SelectContent>
           </Select>
-        </div>
-
-        <div className="min-w-0 space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">
-            From
-          </label>
-          <Input
-            type="date"
-            aria-invalid={dateRangeOrderInvalid}
-            value={filters.date_from ?? ""}
-            onChange={(e) =>
-              updateFilter("date_from", e.target.value || undefined)
-            }
-          />
-        </div>
-
-        <div className="min-w-0 space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">
-            To
-          </label>
-          <Input
-            type="date"
-            aria-invalid={dateRangeOrderInvalid}
-            value={filters.date_to ?? ""}
-            onChange={(e) =>
-              updateFilter("date_to", e.target.value || undefined)
-            }
-          />
         </div>
 
         <div className="flex min-w-0 items-end">

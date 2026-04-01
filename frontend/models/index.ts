@@ -1,9 +1,19 @@
+/** Client-only; omitted from API request bodies. */
+export type MentionDateRangePreset =
+  | "maximum"
+  | "last_3_days"
+  | "last_7_days"
+  | "last_30_days"
+  | "custom";
+
 export interface MentionFilters {
   model?: "chatgpt" | "claude" | "gemini" | "perplexity";
   sentiment?: "positive" | "neutral" | "negative";
   mentioned?: boolean;
   date_from?: string; // YYYY-MM-DD
   date_to?: string; // YYYY-MM-DD
+  /** Dashboard / URL only; never sent to the backend. */
+  mention_date_range_preset?: MentionDateRangePreset;
 }
 
 export interface MentionsRequest {

@@ -1,48 +1,33 @@
-"use client";
-
-import { useMemo, useState, useCallback } from "react";
+import { Suspense } from "react";
+import { DashboardPageClient } from "@/app/dashboard-page-client";
 import { DashboardHeader } from "@/components/dashboard-header";
-import { MentionFilterControl } from "@/components/mention-filter-control";
-import { MentionsTable } from "@/components/mentions-table";
-import { TrendChart } from "@/components/trend-chart";
-import type { MentionFilters } from "@/models";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
-import { buildMentionFiltersForApi } from "@/lib/validation";
-import { MENTION_FILTER_DEBOUNCE_INTERVAL_MS } from "@/config";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default function Dashboard() {
-  const [filters, setFilters] = useState<MentionFilters>({});
-
-  const debouncedFilters = useDebouncedValue(
-    filters,
-    MENTION_FILTER_DEBOUNCE_INTERVAL_MS
-  );
-
-  const filtersForApi = useMemo(
-    () => buildMentionFiltersForApi(debouncedFilters),
-    [debouncedFilters]
-  );
-
-  const handleFiltersChange = useCallback((newFilters: MentionFilters) => {
-    setFilters(newFilters);
-  }, []);
-
+function DashboardFiltersSkeleton() {
   return (
-    <>
-      <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <DashboardHeader />
-        <div className="mx-auto max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
-          <MentionFilterControl
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-          />
-        </div>
-      </div>
-      <main className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
-        <TrendChart filtersForApi={filtersForApi} />
+    <div className="mx-auto max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
+      <Skeleton className="h-24 w-full rounded-lg" />
+    </div>
+  );
+}
 
-        <MentionsTable filtersForApi={filtersForApi} />
-      </main>
-    </>
+export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <>
+          <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <DashboardHeader />
+            <DashboardFiltersSkeleton />
+          </div>
+          <main className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+            <Skeleton className="h-72 w-full rounded-lg" />
+            <Skeleton className="h-96 w-full rounded-lg" />
+          </main>
+        </>
+      }
+    >
+      <DashboardPageClient />
+    </Suspense>
   );
 }
