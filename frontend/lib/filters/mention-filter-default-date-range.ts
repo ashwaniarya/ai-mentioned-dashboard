@@ -1,5 +1,7 @@
-import { MENTION_FILTER_DATE_RANGE_PRESET_INCLUSIVE_DAY_COUNT_BY_PRESET } from "@/config";
-import type { MentionDateRangePreset, MentionFilters } from "@/models";
+import { DATE_PRESET, MENTION_ROLLING_PRESET_DAY_COUNTS } from "@/config";
+import type { MentionRollingDateRangePreset } from "@/config";
+import type { MentionFilters } from "@/models";
+import type { MentionDateRangePreset } from "@/config";
 
 /** YYYY-MM-DD in the local calendar of `anchorDate`. */
 function formatLocalDateForMentionFilter(anchorDate: Date): string {
@@ -36,15 +38,13 @@ export function getMentionDateRangeForInclusiveLocalDayCount(
   return { date_from: dateFrom, date_to: dateTo };
 }
 
+/** Resolves a rolling preset (e.g. last-7-days) into concrete date_from / date_to using the anchor date. */
 export function getMentionDateRangeForMentionDateRangeRollingPreset(
   anchorDate: Date,
-  preset: Extract<
-    MentionDateRangePreset,
-    "last_3_days" | "last_7_days" | "last_30_days"
-  >
+  preset: MentionRollingDateRangePreset
 ): Pick<MentionFilters, "date_from" | "date_to"> {
   const inclusiveDayCount =
-    MENTION_FILTER_DATE_RANGE_PRESET_INCLUSIVE_DAY_COUNT_BY_PRESET[preset];
+    MENTION_ROLLING_PRESET_DAY_COUNTS[preset];
   return getMentionDateRangeForInclusiveLocalDayCount(
     anchorDate,
     inclusiveDayCount
@@ -53,7 +53,7 @@ export function getMentionDateRangeForMentionDateRangeRollingPreset(
 
 /** Baseline dashboard filters: Maximum range (no dates), facets cleared. */
 export function getDashboardBaselineMentionFilters(): MentionFilters {
-  return { mention_date_range_preset: "maximum" };
+  return { mention_date_range_preset: DATE_PRESET.MAXIMUM };
 }
 
 /**
@@ -64,25 +64,21 @@ export function normalizeDashboardMentionFiltersAfterParse(
   filters: MentionFilters,
   anchorDate: Date
 ): MentionFilters {
-  const preset = filters.mention_date_range_preset ?? "maximum";
+  const preset = filters.mention_date_range_preset ?? DATE_PRESET.MAXIMUM;
 
-  if (preset === "maximum") {
+  if (preset === DATE_PRESET.MAXIMUM) {
     const { date_from: _omitFrom, date_to: _omitTo, ...rest } = filters;
     return {
       ...rest,
-      mention_date_range_preset: "maximum",
+      mention_date_range_preset: DATE_PRESET.MAXIMUM,
     };
   }
 
-  if (
-    preset === "last_3_days" ||
-    preset === "last_7_days" ||
-    preset === "last_30_days"
-  ) {
+  if (preset in MENTION_ROLLING_PRESET_DAY_COUNTS) {
     if (filters.date_from === undefined || filters.date_to === undefined) {
       const range = getMentionDateRangeForMentionDateRangeRollingPreset(
         anchorDate,
-        preset
+        preset as MentionRollingDateRangePreset
       );
       return { ...filters, ...range, mention_date_range_preset: preset };
     }
@@ -92,13 +88,14 @@ export function normalizeDashboardMentionFiltersAfterParse(
   if (filters.date_from === undefined && filters.date_to === undefined) {
     return {
       ...filters,
-      mention_date_range_preset: "maximum",
+      mention_date_range_preset: DATE_PRESET.MAXIMUM,
     };
   }
 
-  return { ...filters, mention_date_range_preset: "custom" };
+  return { ...filters, mention_date_range_preset: DATE_PRESET.CUSTOM };
 }
 
+/** Shallow-compares two MentionFilters for dashboard-relevant equality (treats missing preset as MAXIMUM). */
 export function mentionFiltersShallowEqualForDashboard(
   left: MentionFilters,
   right: MentionFilters
@@ -109,7 +106,7 @@ export function mentionFiltersShallowEqualForDashboard(
     left.mentioned === right.mentioned &&
     left.date_from === right.date_from &&
     left.date_to === right.date_to &&
-    (left.mention_date_range_preset ?? "maximum") ===
-      (right.mention_date_range_preset ?? "maximum")
+    (left.mention_date_range_preset ?? DATE_PRESET.MAXIMUM) ===
+      (right.mention_date_range_preset ?? DATE_PRESET.MAXIMUM)
   );
 }

@@ -31,7 +31,11 @@ import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import type { Mention, MentionFilters } from "@/models";
 import { brandMentionsApiService } from "@/services";
 import { mentionFiltersForApiRequestBody } from "@/lib/validation";
-import { DEFAULT_PAGE_SIZE } from "@/config";
+import {
+  DEFAULT_PAGE_SIZE,
+  displayLabelForMentionModel,
+  displayLabelForMentionSentiment,
+} from "@/config";
 
 interface MentionsTableProps {
   filtersForApi: MentionFilters;
@@ -118,7 +122,7 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
         header: "Model",
         cell: (info) => (
           <Badge variant="outline" className={modelNameBadgeClassName}>
-            {info.getValue()}
+            {displayLabelForMentionModel(info.getValue())}
           </Badge>
         ),
       }),
@@ -155,12 +159,13 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
         cell: (info) => {
           const val = info.getValue();
           if (!val) return "—";
+          const title = displayLabelForMentionSentiment(val);
           return (
             <Badge
               variant="outline"
-              className={`border-transparent capitalize ${sentimentChipClassBySentiment[val] ?? "bg-muted text-muted-foreground"}`}
+              className={`border-transparent ${sentimentChipClassBySentiment[val] ?? "bg-muted text-muted-foreground"}`}
             >
-              {val}
+              {title}
             </Badge>
           );
         },

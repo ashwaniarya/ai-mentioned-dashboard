@@ -10,13 +10,23 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react";
-import type { MentionDateRangePreset, MentionFilters } from "@/models";
+import type { MentionFilters } from "@/models";
+import type { MentionDateRangePreset } from "@/config";
 import { isMentionDateRangeOrderInvalid } from "@/lib/validation";
 import {
   getMentionDateRangeForMentionDateRangeRollingPreset,
   mentionFiltersShallowEqualForDashboard,
-} from "@/lib/mention-filter-default-date-range";
-import { MENTION_FILTER_INVALID_DATE_RANGE_MESSAGE } from "@/config";
+} from "./mention-filter-default-date-range";
+import {
+  DATE_PRESET,
+  FACET,
+  MENTIONED_VALUE,
+  MENTION_FILTER_INVALID_DATE_RANGE_MESSAGE,
+  MENTION_ROLLING_PRESET_DAY_COUNTS,
+  labelForValue,
+  mentionFilterChoices,
+} from "@/config";
+import type { MentionRollingDateRangePreset } from "@/config";
 
 export interface MentionFilterControlProps {
   filters: MentionFilters;
@@ -24,38 +34,6 @@ export interface MentionFilterControlProps {
   /** Default date range + cleared facet filters; used for Reset and disabled state. */
   dashboardBaselineMentionFilters: MentionFilters;
 }
-
-const MENTION_DATE_RANGE_PRESET_SELECT_OPTIONS: {
-  value: MentionDateRangePreset;
-  label: string;
-}[] = [
-  { value: "last_3_days", label: "Last 3 days" },
-  { value: "last_7_days", label: "Last 7 days" },
-  { value: "last_30_days", label: "Last 30 days" },
-  { value: "maximum", label: "Maximum" },
-  { value: "custom", label: "Custom" },
-];
-
-const MODEL_OPTIONS = [
-  { value: "all", label: "All Models" },
-  { value: "chatgpt", label: "ChatGPT" },
-  { value: "claude", label: "Claude" },
-  { value: "gemini", label: "Gemini" },
-  { value: "perplexity", label: "Perplexity" },
-];
-
-const SENTIMENT_OPTIONS = [
-  { value: "all", label: "All Sentiments" },
-  { value: "positive", label: "Positive" },
-  { value: "neutral", label: "Neutral" },
-  { value: "negative", label: "Negative" },
-];
-
-const MENTIONED_OPTIONS = [
-  { value: "all", label: "All Mentions" },
-  { value: "true", label: "Mentioned" },
-  { value: "false", label: "Not Mentioned" },
-];
 
 export function MentionFilterControl({
   filters,
@@ -69,36 +47,30 @@ export function MentionFilterControl({
     onFiltersChange({ ...filters, [key]: value });
   };
 
-  const handleMentionDateRangePresetSelectChange = (
-    value: MentionDateRangePreset | null
-  ) => {
-    if (value === null) return;
-    const preset = value;
+  const handleMentionDateRangePresetSelectChange = (value: unknown) => {
+    if (value === null || value === undefined) return;
+    const preset = value as MentionDateRangePreset;
     const anchorDate = new Date();
-    if (preset === "maximum") {
+    if (preset === DATE_PRESET.MAXIMUM) {
       onFiltersChange({
         ...filters,
         date_from: undefined,
         date_to: undefined,
-        mention_date_range_preset: "maximum",
+        mention_date_range_preset: DATE_PRESET.MAXIMUM,
       });
       return;
     }
-    if (preset === "custom") {
+    if (preset === DATE_PRESET.CUSTOM) {
       onFiltersChange({
         ...filters,
-        mention_date_range_preset: "custom",
+        mention_date_range_preset: DATE_PRESET.CUSTOM,
       });
       return;
     }
-    if (
-      preset === "last_3_days" ||
-      preset === "last_7_days" ||
-      preset === "last_30_days"
-    ) {
+    if (preset in MENTION_ROLLING_PRESET_DAY_COUNTS) {
       const range = getMentionDateRangeForMentionDateRangeRollingPreset(
         anchorDate,
-        preset
+        preset as MentionRollingDateRangePreset
       );
       onFiltersChange({
         ...filters,
@@ -115,7 +87,7 @@ export function MentionFilterControl({
     onFiltersChange({
       ...filters,
       date_from: dateFrom,
-      mention_date_range_preset: bothDateBoundsMissing ? "maximum" : "custom",
+      mention_date_range_preset: bothDateBoundsMissing ? DATE_PRESET.MAXIMUM : DATE_PRESET.CUSTOM,
     });
   };
 
@@ -126,7 +98,7 @@ export function MentionFilterControl({
     onFiltersChange({
       ...filters,
       date_to: dateTo,
-      mention_date_range_preset: bothDateBoundsMissing ? "maximum" : "custom",
+      mention_date_range_preset: bothDateBoundsMissing ? DATE_PRESET.MAXIMUM : DATE_PRESET.CUSTOM,
     });
   };
 
@@ -142,7 +114,7 @@ export function MentionFilterControl({
   const dateRangeOrderInvalid = isMentionDateRangeOrderInvalid(filters);
 
   const mentionDateRangePresetSelectValue =
-    filters.mention_date_range_preset ?? "maximum";
+    filters.mention_date_range_preset ?? DATE_PRESET.MAXIMUM;
 
   return (
     <div className="w-full min-w-0">
@@ -154,12 +126,15 @@ export function MentionFilterControl({
           <Select
             value={mentionDateRangePresetSelectValue}
             onValueChange={handleMentionDateRangePresetSelectChange}
+            itemToStringLabel={(value) =>
+              labelForValue(mentionFilterChoices.dateRange, value)
+            }
           >
             <SelectTrigger className="w-full min-w-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {MENTION_DATE_RANGE_PRESET_SELECT_OPTIONS.map((opt) => (
+              {mentionFilterChoices.dateRange.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
                 </SelectItem>
@@ -197,19 +172,22 @@ export function MentionFilterControl({
             Model
           </label>
           <Select
-            value={filters.model ?? "all"}
+            value={filters.model ?? FACET.ALL}
             onValueChange={(val) =>
               updateFilter(
                 "model",
-                val === "all" ? undefined : (val as MentionFilters["model"])
+                val === FACET.ALL ? undefined : (val as MentionFilters["model"])
               )
+            }
+            itemToStringLabel={(value) =>
+              labelForValue(mentionFilterChoices.model, value)
             }
           >
             <SelectTrigger className="w-full min-w-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {MODEL_OPTIONS.map((opt) => (
+              {mentionFilterChoices.model.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
                 </SelectItem>
@@ -223,21 +201,24 @@ export function MentionFilterControl({
             Sentiment
           </label>
           <Select
-            value={filters.sentiment ?? "all"}
+            value={filters.sentiment ?? FACET.ALL}
             onValueChange={(val) =>
               updateFilter(
                 "sentiment",
-                val === "all"
+                val === FACET.ALL
                   ? undefined
                   : (val as MentionFilters["sentiment"])
               )
+            }
+            itemToStringLabel={(value) =>
+              labelForValue(mentionFilterChoices.sentiment, value)
             }
           >
             <SelectTrigger className="w-full min-w-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {SENTIMENT_OPTIONS.map((opt) => (
+              {mentionFilterChoices.sentiment.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
                 </SelectItem>
@@ -253,23 +234,26 @@ export function MentionFilterControl({
           <Select
             value={
               filters.mentioned === true
-                ? "true"
+                ? MENTIONED_VALUE.YES
                 : filters.mentioned === false
-                  ? "false"
-                  : "all"
+                  ? MENTIONED_VALUE.NO
+                  : FACET.ALL
             }
             onValueChange={(val) =>
               updateFilter(
                 "mentioned",
-                val === "all" ? undefined : val === "true"
+                val === FACET.ALL ? undefined : val === MENTIONED_VALUE.YES
               )
+            }
+            itemToStringLabel={(value) =>
+              labelForValue(mentionFilterChoices.mentioned, value)
             }
           >
             <SelectTrigger className="w-full min-w-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {MENTIONED_OPTIONS.map((opt) => (
+              {mentionFilterChoices.mentioned.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
                 </SelectItem>

@@ -10,7 +10,7 @@ import {
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { DashboardHeader } from "@/components/dashboard-header";
-import { MentionFilterControl } from "@/components/mention-filter-control";
+import { MentionFilterControl } from "@/lib/filters/mention-filter-control";
 import { MentionsTable } from "@/components/mentions-table";
 import { TrendChart } from "@/components/trend-chart";
 import type { MentionFilters } from "@/models";
@@ -20,7 +20,7 @@ import {
   getDashboardBaselineMentionFilters,
   mentionFiltersShallowEqualForDashboard,
   normalizeDashboardMentionFiltersAfterParse,
-} from "@/lib/mention-filter-default-date-range";
+} from "@/lib/filters/mention-filter-default-date-range";
 import {
   mentionFiltersToSortedQueryString,
   parseMentionFiltersFromSearchParams,
