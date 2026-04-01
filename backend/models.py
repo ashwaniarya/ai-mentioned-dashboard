@@ -1,15 +1,16 @@
 from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
+from typing import Optional, Literal
+from datetime import datetime, date
 
 
 # Request models
 
 class MentionFilters(BaseModel):
-    model: Optional[str] = None  # chatgpt, claude, gemini, perplexity
-    sentiment: Optional[str] = None  # positive, neutral, negative
-    date_from: Optional[str] = None  # YYYY-MM-DD
-    date_to: Optional[str] = None  # YYYY-MM-DD
+    model: Optional[Literal["chatgpt", "claude", "gemini", "perplexity"]] = None
+    sentiment: Optional[Literal["positive", "neutral", "negative"]] = None
+    mentioned: Optional[bool] = None
+    date_from: Optional[date] = None
+    date_to: Optional[date] = None
 
 
 class MentionsRequest(BaseModel):
@@ -19,9 +20,9 @@ class MentionsRequest(BaseModel):
 
 
 class TrendsRequest(BaseModel):
-    date_from: Optional[str] = None
-    date_to: Optional[str] = None
-    group_by: str = "day"  # "day" or "week"
+    date_from: Optional[date] = None
+    date_to: Optional[date] = None
+    group_by: Literal["day", "week"] = "day"
 
 
 # Response models
@@ -52,3 +53,8 @@ class TrendPoint(BaseModel):
 
 class TrendsResponse(BaseModel):
     data: list[TrendPoint]
+
+
+class ErrorResponse(BaseModel):
+    error: str
+    detail: Optional[str] = None
