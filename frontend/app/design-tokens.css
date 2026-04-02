@@ -1,0 +1,160 @@
+:root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    /* Chart series: chroma so lines/areas read as color (trend + future charts). */
+    --chart-1: oklch(0.48 0.14 158);
+    --chart-2: oklch(0.45 0.18 264);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+
+    /* Elevation (showcase + surfaces) */
+    --elevation-subtle: 0 1px 2px oklch(0.145 0 0 / 0.06);
+    --elevation-card: 0 1px 2px oklch(0.145 0 0 / 0.06), 0 4px 12px oklch(0.145 0 0 / 0.06);
+    --elevation-popover: 0 4px 6px oklch(0.145 0 0 / 0.07), 0 12px 24px oklch(0.145 0 0 / 0.08);
+    --elevation-modal: 0 8px 24px oklch(0.145 0 0 / 0.12), 0 24px 48px oklch(0.145 0 0 / 0.1);
+
+    /* Type ramp (dashboard typography atom) */
+    --dashboard-type-display-size: 2.25rem;
+    --dashboard-type-display-line-height: 1.12;
+    --dashboard-type-display-tracking: -0.02em;
+    --dashboard-type-page-title-size: 1.875rem;
+    --dashboard-type-page-title-line-height: 1.2;
+    --dashboard-type-section-size: 1.375rem;
+    --dashboard-type-section-line-height: 1.3;
+    --dashboard-type-subsection-size: 1.125rem;
+    --dashboard-type-subsection-line-height: 1.4;
+    --dashboard-type-lead-size: 1.125rem;
+    --dashboard-type-lead-line-height: 1.55;
+    --dashboard-type-body-size: 1rem;
+    --dashboard-type-body-line-height: 1.5;
+    --dashboard-type-supporting-size: 0.875rem;
+    --dashboard-type-supporting-line-height: 1.5;
+    --dashboard-type-caption-size: 0.75rem;
+    --dashboard-type-caption-line-height: 1.45;
+    --dashboard-type-overline-size: 0.6875rem;
+    --dashboard-type-overline-line-height: 1.4;
+    --dashboard-type-overline-tracking: 0.08em;
+    --dashboard-type-code-size: 0.8125rem;
+    --dashboard-type-code-line-height: 1.5;
+
+    /* Spacing rhythm (gallery + layout) */
+    --dashboard-space-xs: 0.25rem;
+    --dashboard-space-sm: 0.5rem;
+    --dashboard-space-md: 1rem;
+    --dashboard-space-lg: 1.5rem;
+    --dashboard-space-xl: 2rem;
+    --dashboard-space-2xl: 3rem;
+    --dashboard-space-section: 2.5rem;
+
+    /* Motion */
+    --dashboard-motion-duration-fast: 150ms;
+    --dashboard-motion-duration-default: 200ms;
+    --dashboard-motion-duration-slow: 280ms;
+    --dashboard-motion-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Focus ring (documented alongside outline-ring) */
+    --dashboard-focus-ring-offset: 2px;
+}
+
+.dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.72 0.13 158);
+    --chart-2: oklch(0.68 0.15 264);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+
+    --elevation-subtle: 0 1px 2px oklch(0 0 0 / 0.35);
+    --elevation-card: 0 1px 2px oklch(0 0 0 / 0.4), 0 8px 20px oklch(0 0 0 / 0.35);
+    --elevation-popover: 0 4px 12px oklch(0 0 0 / 0.45), 0 16px 40px oklch(0 0 0 / 0.4);
+    --elevation-modal: 0 12px 32px oklch(0 0 0 / 0.55), 0 32px 64px oklch(0 0 0 / 0.45);
+
+    --dashboard-type-display-size: 2.25rem;
+    --dashboard-type-display-line-height: 1.12;
+    --dashboard-type-display-tracking: -0.02em;
+    --dashboard-type-page-title-size: 1.875rem;
+    --dashboard-type-page-title-line-height: 1.2;
+    --dashboard-type-section-size: 1.375rem;
+    --dashboard-type-section-line-height: 1.3;
+    --dashboard-type-subsection-size: 1.125rem;
+    --dashboard-type-subsection-line-height: 1.4;
+    --dashboard-type-lead-size: 1.125rem;
+    --dashboard-type-lead-line-height: 1.55;
+    --dashboard-type-body-size: 1rem;
+    --dashboard-type-body-line-height: 1.5;
+    --dashboard-type-supporting-size: 0.875rem;
+    --dashboard-type-supporting-line-height: 1.5;
+    --dashboard-type-caption-size: 0.75rem;
+    --dashboard-type-caption-line-height: 1.45;
+    --dashboard-type-overline-size: 0.6875rem;
+    --dashboard-type-overline-line-height: 1.4;
+    --dashboard-type-overline-tracking: 0.08em;
+    --dashboard-type-code-size: 0.8125rem;
+    --dashboard-type-code-line-height: 1.5;
+
+    --dashboard-space-xs: 0.25rem;
+    --dashboard-space-sm: 0.5rem;
+    --dashboard-space-md: 1rem;
+    --dashboard-space-lg: 1.5rem;
+    --dashboard-space-xl: 2rem;
+    --dashboard-space-2xl: 3rem;
+    --dashboard-space-section: 2.5rem;
+
+    --dashboard-motion-duration-fast: 150ms;
+    --dashboard-motion-duration-default: 200ms;
+    --dashboard-motion-duration-slow: 280ms;
+    --dashboard-motion-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+    --dashboard-focus-ring-offset: 2px;
+}
