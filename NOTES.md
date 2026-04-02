@@ -2,6 +2,7 @@
 
 ## Trade-offs & Decisions
 
+- **Keyset (cursor) pagination** — `POST /mentions` still uses offset pagination (`page` with `LIMIT` / `OFFSET`). A cursor-based approach would increase overall **complexity** and the **time needed to test** everything properly, so it was not included in this assignment.
 - **SQLAlchemy async instead of raw aiosqlite** — Adds a dependency but gives type-safe query building, avoids SQL string concatenation for dynamic filters. All aggregations still execute in SQL, not Python.
 - **SQLite retained** — Kept the provided SQLite DB as-is. No migration to Postgres. Simple to run: `python seed_db.py` creates the DB.
 - **Railway deployment keeps the seeded SQLite file in git** — To keep deployment simple for the task, `backend/mentions.db` is committed and shipped with the backend service. I am intentionally not using a Railway volume for this assignment, even though a volume would be the better long-term persistence option.
