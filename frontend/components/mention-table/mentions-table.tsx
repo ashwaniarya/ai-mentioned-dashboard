@@ -76,7 +76,7 @@ const mentionColumns = [
     header: "Query",
     cell: (info) => (
       <span
-        className="block max-w-[140px] truncate font-medium text-foreground sm:max-w-[220px]"
+        className="block max-w-[140px] truncate font-medium text-mention-table-query-column-text sm:max-w-[220px]"
         title={info.getValue()}
       >
         {info.getValue()}

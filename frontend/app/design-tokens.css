@@ -148,6 +148,9 @@
     --dashboard-chart-group-by-segment-selected-background: var(--primary);
     --dashboard-chart-group-by-segment-selected-foreground: var(--primary-foreground);
 
+    /* Mentions table — Query column body text: softer than --foreground (less harsh ink on white) */
+    --mention-table-query-column-text: oklch(0.4 0.026 285);
+
     /* Mentions table — Yes: neutral tray; rim = same hue/chroma as --success (alpha wash — no color-mix into C=0, avoids yellow/orange skew) */
     --mention-yes-chip-bg: oklch(1 0 0);
     --mention-yes-chip-border: oklch(from var(--success) l c h / 55%);
@@ -290,6 +293,8 @@
         var(--warning) 55%,
         transparent
     );
+
+    --mention-table-query-column-text: oklch(0.9 0.014 285);
 
     --mention-yes-chip-bg: oklch(0.14 0 0);
     --mention-yes-chip-border: oklch(from var(--success) l c h / 62%);

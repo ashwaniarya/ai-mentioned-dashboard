@@ -30,6 +30,9 @@
     --color-success-foreground: var(--success-foreground);
     --color-mention-yes-chip-bg: var(--mention-yes-chip-bg);
     --color-mention-yes-chip-border: var(--mention-yes-chip-border);
+    --color-mention-table-query-column-text: var(
+        --mention-table-query-column-text
+    );
     --color-warning: var(--warning);
     --color-warning-foreground: var(--warning-foreground);
     --color-info: var(--info);
