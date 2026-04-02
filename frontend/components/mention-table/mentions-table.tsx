@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MENTION_FILTER_DEBOUNCE_INTERVAL_MS } from "@/config";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { buildMentionFiltersForApi } from "@/lib/helpers/mention-filter-api";
-import { normalizeDashboardMentionFiltersAfterParse, getDashboardBaselineMentionFilters, mentionFiltersShallowEqualForDashboard } from "@/lib/helpers/mention-filter-default-date-range";
+import { normalizeDashboardMentionFiltersAfterParse, mentionFiltersShallowEqualForDashboard } from "@/lib/helpers/mention-filter-default-date-range";
 import { parseMentionFiltersFromSearchParams, mentionFiltersToSortedQueryString, writeMentionFiltersToSearchParams } from "@/lib/helpers/mention-filters-url";
 import { MentionsTableFilter } from "@/components/mention-table/mentions-table-filter";
 

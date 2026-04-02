@@ -1,38 +1,26 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { TrendChartFilter } from "@/components/trend-chart/trend-chart-filter";
+import { MentionsTableFilter } from "@/components/mention-table/mentions-table-filter";
 import {
   getDashboardBaselineMentionFilters,
   normalizeDashboardMentionFiltersAfterParse,
 } from "@/lib/helpers/mention-filter-default-date-range";
 import { DATE_PRESET } from "@/config";
 
-describe("TrendChartFilter", () => {
-  it("shows From and To when Custom is chosen and filters pass through dashboard normalize", () => {
-    const filters = normalizeDashboardMentionFiltersAfterParse(
-      { mention_date_range_preset: DATE_PRESET.CUSTOM },
-      new Date()
-    );
-    render(
-      <TrendChartFilter filters={filters} onFiltersChange={vi.fn()} />
-    );
-    expect(screen.getByText("From")).toBeInTheDocument();
-    expect(screen.getByText("To")).toBeInTheDocument();
-  });
-
+describe("MentionsTableFilter", () => {
   it("reset calls onFiltersChange with normalized dashboard baseline", () => {
     const onFiltersChange = vi.fn();
     render(
-      <TrendChartFilter
+      <MentionsTableFilter
         filters={{
-          model: "chatgpt",
+          sentiment: "positive",
           mention_date_range_preset: DATE_PRESET.MAXIMUM,
         }}
         onFiltersChange={onFiltersChange}
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /reset chart filters/i }));
+    fireEvent.click(screen.getByRole("button", { name: /reset table filters/i }));
 
     expect(onFiltersChange).toHaveBeenCalledTimes(1);
     expect(onFiltersChange).toHaveBeenCalledWith({
@@ -43,7 +31,7 @@ describe("TrendChartFilter", () => {
   it("disables reset when filters already match dashboard baseline", () => {
     const onFiltersChange = vi.fn();
     render(
-      <TrendChartFilter
+      <MentionsTableFilter
         filters={normalizeDashboardMentionFiltersAfterParse(
           getDashboardBaselineMentionFilters(),
           new Date()
@@ -52,6 +40,6 @@ describe("TrendChartFilter", () => {
       />
     );
 
-    expect(screen.getByRole("button", { name: /reset chart filters/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /reset table filters/i })).toBeDisabled();
   });
 });

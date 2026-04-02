@@ -1,9 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MentionsTable } from "@/components/mentions-table";
+import { MentionsTable } from "@/components/mention-table/mentions-table";
 import type { Mention, MentionsRequest } from "@/models";
 import { brandMentionsApiService } from "@/services";
 import { toast } from "sonner";
+
+const navigationMocks = vi.hoisted(() => ({
+  searchParamsString: "",
+  replace: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(navigationMocks.searchParamsString),
+  usePathname: () => "/",
+  useRouter: () => ({ replace: navigationMocks.replace }),
+}));
 
 vi.mock("@/services", () => ({
   brandMentionsApiService: {
@@ -63,6 +74,8 @@ function getPaginationButton(name: RegExp) {
 describe("MentionsTable", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    navigationMocks.searchParamsString = "";
+    navigationMocks.replace.mockClear();
   });
 
   it("F8 — renders correct number of data rows", () => {
@@ -71,7 +84,7 @@ describe("MentionsTable", () => {
       data: { data: mentions, total: 3, page: 1, per_page: 25 },
     });
 
-    render(<MentionsTable filtersForApi={{}} />);
+    render(<MentionsTable />);
 
     const rows = screen.getAllByRole("row");
     expect(rows.length).toBe(4);
@@ -82,7 +95,7 @@ describe("MentionsTable", () => {
       data: { data: [], total: 0, page: 1, per_page: 25 },
     });
 
-    render(<MentionsTable filtersForApi={{}} />);
+    render(<MentionsTable />);
 
     expect(screen.getByText(/no mentions/i)).toBeInTheDocument();
   });
@@ -92,7 +105,7 @@ describe("MentionsTable", () => {
       data: { data: [makeMention()], total: 50, page: 1, per_page: 25 },
     });
 
-    render(<MentionsTable filtersForApi={{}} />);
+    render(<MentionsTable />);
 
     expect(getPaginationButton(/previous page/i)).toBeDisabled();
   });
@@ -102,7 +115,7 @@ describe("MentionsTable", () => {
       data: { data: [makeMention()], total: 25, page: 1, per_page: 25 },
     });
 
-    render(<MentionsTable filtersForApi={{}} />);
+    render(<MentionsTable />);
 
     expect(getPaginationButton(/next page/i)).toBeDisabled();
   });
@@ -113,7 +126,7 @@ describe("MentionsTable", () => {
       isLoading: true,
     });
 
-    const { container } = render(<MentionsTable filtersForApi={{}} />);
+    const { container } = render(<MentionsTable />);
     const skeletons = container.querySelectorAll('[class*="skeleton"], [data-slot="skeleton"]');
     expect(skeletons.length).toBeGreaterThan(0);
   });
@@ -132,7 +145,7 @@ describe("MentionsTable", () => {
           })
     );
 
-    render(<MentionsTable filtersForApi={{}} />);
+    render(<MentionsTable />);
 
     await waitFor(() => {
       expect(screen.getByText("page 1 query")).toBeInTheDocument();
@@ -167,7 +180,7 @@ describe("MentionsTable", () => {
           })
     );
 
-    render(<MentionsTable filtersForApi={{}} />);
+    render(<MentionsTable />);
 
     fireEvent.click(getPaginationButton(/next page/i));
 
@@ -190,7 +203,7 @@ describe("MentionsTable", () => {
       error: new Error("Mentions API failed"),
     });
 
-    render(<MentionsTable filtersForApi={{}} />);
+    render(<MentionsTable />);
 
     expect(screen.getByText(/unable to load brand mentions/i)).toBeInTheDocument();
     expect(toastErrorMock).toHaveBeenCalledWith("Mentions API failed");

@@ -39,7 +39,8 @@
     --ring: oklch(0.56 0.17 var(--brand-primary-hue));
 
     --chart-1: oklch(0.52 0.2 var(--brand-primary-hue));
-    --chart-2: oklch(0.55 0.14 195);
+    /* Secondary series: warm amber — higher chroma + lighter than “smoky” mid-L; L capped for solid chip + white */
+    --chart-2: oklch(0.62 0.195 78);
     --chart-3: oklch(0.62 0.17 42);
     --chart-4: oklch(0.56 0.15 328);
     --chart-5: oklch(0.66 0.14 128);
@@ -169,7 +170,7 @@
     --ring: oklch(0.62 0.14 var(--brand-primary-hue));
 
     --chart-1: oklch(0.72 0.17 var(--brand-primary-hue));
-    --chart-2: oklch(0.68 0.13 195);
+    --chart-2: oklch(0.86 0.17 78);
     --chart-3: oklch(0.75 0.15 42);
     --chart-4: oklch(0.7 0.14 328);
     --chart-5: oklch(0.74 0.12 128);

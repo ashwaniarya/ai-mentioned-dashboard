@@ -1,9 +1,15 @@
 "use client";
 
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import type { MentionFilters } from "@/models";
 import { isMentionDateRangeOrderInvalid } from "@/lib/helpers/mention-filter-api";
-import { getMentionDateRangeForMentionDateRangeRollingPreset } from "@/lib/helpers/mention-filter-default-date-range";
+import {
+  getDashboardBaselineMentionFilters,
+  getMentionDateRangeForMentionDateRangeRollingPreset,
+  mentionFiltersShallowEqualForDashboard,
+  normalizeDashboardMentionFiltersAfterParse,
+} from "@/lib/helpers/mention-filter-default-date-range";
 import {
   DATE_PRESET,
   MENTION_FILTER_INVALID_DATE_RANGE_MESSAGE,
@@ -24,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { DashboardBodyText } from "@/components/ui/typography";
+import { MentionFiltersResetIconButton } from "@/components/mention-filters/mention-filters-reset-icon-button";
 
 export interface MentionsTableFilterProps {
   filters: MentionFilters;
@@ -31,6 +38,15 @@ export interface MentionsTableFilterProps {
 }
 
 export function MentionsTableFilter({ filters, onFiltersChange }: MentionsTableFilterProps) {
+  const normalizedDashboardBaselineMentionFilters = useMemo(
+    () =>
+      normalizeDashboardMentionFiltersAfterParse(
+        getDashboardBaselineMentionFilters(),
+        new Date()
+      ),
+    []
+  );
+
   const dateRangeOrderInvalid = isMentionDateRangeOrderInvalid(filters);
   const mentionDateRangePresetSelectValue =
     (filters.mention_date_range_preset ?? DATE_PRESET.MAXIMUM) as MentionDateRangePreset;
@@ -87,10 +103,40 @@ export function MentionsTableFilter({ filters, onFiltersChange }: MentionsTableF
   };
 
   const fieldLabelClasses = "block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5";
-  const inputContainerClasses = "h-9 py-1 px-3 bg-muted/20 hover:bg-muted/40 transition-colors border-border/50";
+  const inputContainerClasses =
+    "h-9 min-h-9 data-[size=default]:h-9 py-1 px-3 bg-muted/20 hover:bg-muted/40 transition-colors border-border/50";
+
+  const handleResetDashboardMentionFilters = () => {
+    onFiltersChange(
+      normalizeDashboardMentionFiltersAfterParse(
+        getDashboardBaselineMentionFilters(),
+        new Date()
+      )
+    );
+  };
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap p-1">
+    <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end p-1">
+      <div className="flex min-w-0 shrink-0 flex-col">
+        <div
+          aria-hidden="true"
+          className={cn(
+            fieldLabelClasses,
+            "opacity-0 select-none pointer-events-none"
+          )}
+        >
+          Reset
+        </div>
+        <MentionFiltersResetIconButton
+          ariaLabel="Reset table filters"
+          disabled={mentionFiltersShallowEqualForDashboard(
+            filters,
+            normalizedDashboardBaselineMentionFilters
+          )}
+          onClick={handleResetDashboardMentionFilters}
+        />
+      </div>
+
       <div className="flex-1 min-w-[140px]">
         <label className={fieldLabelClasses}>Date Range</label>
         <Select
