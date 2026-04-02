@@ -24,6 +24,8 @@ import { DashboardBodyText } from "@/components/ui/typography";
 import { MentionFiltersResetIconButton } from "@/components/mention-filters/mention-filters-reset-icon-button";
 import {
   dashboardMentionFilterFieldLabelClasses,
+  dashboardMentionFilterFlexibleFieldClasses,
+  dashboardMentionFilterHorizontalControlRowClasses,
   dashboardMentionFilterInputContainerClasses,
   useDashboardMentionFilterSharedHandlers,
 } from "@/components/mention-filters/use-dashboard-mention-filter-shared-handlers";
@@ -58,56 +60,58 @@ export function TrendChartFilter({ filters, onFiltersChange }: TrendChartFilterP
   const trendChartGroupBySelectedValue = filters.group_by ?? "day";
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end p-1">
-      <div className="flex min-w-0 shrink-0 flex-col">
-        <div
-          aria-hidden="true"
-          className={cn(
-            dashboardMentionFilterFieldLabelClasses,
-            "opacity-0 select-none pointer-events-none"
-          )}
-        >
-          Reset
+    <div className="flex flex-col gap-4 sm:flex-row sm:flex-nowrap sm:items-end p-1">
+      <div className={dashboardMentionFilterHorizontalControlRowClasses}>
+        <div className="flex min-w-0 shrink-0 flex-col">
+          <div
+            aria-hidden="true"
+            className={cn(
+              dashboardMentionFilterFieldLabelClasses,
+              "opacity-0 select-none pointer-events-none"
+            )}
+          >
+            Reset
+          </div>
+          <MentionFiltersResetIconButton
+            ariaLabel="Reset chart filters"
+            disabled={mentionFiltersShallowEqualForDashboard(
+              filters,
+              normalizedDashboardBaselineMentionFilters
+            )}
+            onClick={handleResetDashboardMentionFilters}
+          />
         </div>
-        <MentionFiltersResetIconButton
-          ariaLabel="Reset chart filters"
-          disabled={mentionFiltersShallowEqualForDashboard(
-            filters,
-            normalizedDashboardBaselineMentionFilters
-          )}
-          onClick={handleResetDashboardMentionFilters}
-        />
-      </div>
 
-      <div className="flex-1 min-w-[140px]">
-        <label className={dashboardMentionFilterFieldLabelClasses}>Date Range</label>
-        <Select
-          value={mentionDateRangePresetSelectValue}
-          onValueChange={(val) => { if (val) handleDatePresetChange(val as MentionDateRangePreset); }}
-          itemToStringLabel={(value) => labelForValue(mentionFilterChoices.dateRange, value)}
-        >
-          <SelectTrigger className={cn("w-full transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {mentionFilterChoices.dateRange.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className={dashboardMentionFilterFlexibleFieldClasses}>
+          <label className={dashboardMentionFilterFieldLabelClasses}>Date Range</label>
+          <Select
+            value={mentionDateRangePresetSelectValue}
+            onValueChange={(val) => { if (val) handleDatePresetChange(val as MentionDateRangePreset); }}
+            itemToStringLabel={(value) => labelForValue(mentionFilterChoices.dateRange, value)}
+          >
+            <SelectTrigger className={cn("w-full transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {mentionFilterChoices.dateRange.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {mentionDateRangePresetSelectValue === DATE_PRESET.CUSTOM && (
-        <>
-          <div className="flex-1 min-w-[140px]">
+        <div className={dashboardMentionFilterHorizontalControlRowClasses}>
+          <div className={dashboardMentionFilterFlexibleFieldClasses}>
             <label className={dashboardMentionFilterFieldLabelClasses}>From</label>
             <Input type="date" className={cn("transition-all duration-200", dashboardMentionFilterInputContainerClasses)} value={filters.date_from ?? ""} onChange={(e) => handleDateFromChange(e.target.value)} />
           </div>
-          <div className="flex-1 min-w-[140px]">
+          <div className={dashboardMentionFilterFlexibleFieldClasses}>
             <label className={dashboardMentionFilterFieldLabelClasses}>To</label>
             <Input type="date" className={cn("transition-all duration-200", dashboardMentionFilterInputContainerClasses)} value={filters.date_to ?? ""} onChange={(e) => handleDateToChange(e.target.value)} />
           </div>
-        </>
+        </div>
       )}
 
       <div
@@ -124,7 +128,12 @@ export function TrendChartFilter({ filters, onFiltersChange }: TrendChartFilterP
             onValueChange={handleModelChange}
             itemToStringLabel={(value) => labelForValue(mentionFilterChoices.model, value)}
           >
-            <SelectTrigger className={cn("w-full transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
+            <SelectTrigger
+              className={cn(
+                "w-full min-w-0 transition-all duration-200",
+                dashboardMentionFilterInputContainerClasses
+              )}
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -142,7 +151,12 @@ export function TrendChartFilter({ filters, onFiltersChange }: TrendChartFilterP
             onValueChange={handleSentimentChange}
             itemToStringLabel={(value) => labelForValue(mentionFilterChoices.sentiment, value)}
           >
-            <SelectTrigger className={cn("w-full transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
+            <SelectTrigger
+              className={cn(
+                "w-full min-w-0 transition-all duration-200",
+                dashboardMentionFilterInputContainerClasses
+              )}
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

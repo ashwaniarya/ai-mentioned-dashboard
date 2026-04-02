@@ -21,6 +21,13 @@ export const dashboardMentionFilterFieldLabelClasses =
 export const dashboardMentionFilterInputContainerClasses =
   "h-9 min-h-9 data-[size=default]:h-9 py-1 px-3 bg-muted/20 hover:bg-muted/40 transition-colors border-border/50";
 
+/** Single horizontal row for reset + date preset (and for Custom From/To) at all breakpoints. */
+export const dashboardMentionFilterHorizontalControlRowClasses =
+  "flex flex-row flex-nowrap items-end gap-3 w-full min-w-0 sm:w-auto sm:flex-1";
+
+/** Grows within a horizontal filter row; min-w-0 allows flex children to shrink on narrow viewports. */
+export const dashboardMentionFilterFlexibleFieldClasses = "min-w-0 flex-1";
+
 export interface UseDashboardMentionFilterSharedHandlersParams {
   filters: MentionFilters;
   onFiltersChange: (filters: MentionFilters) => void;

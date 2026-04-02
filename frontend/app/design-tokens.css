@@ -101,6 +101,10 @@
     --dashboard-type-code-size: 0.8125rem;
     --dashboard-type-code-line-height: 1.5;
 
+    /* Dashboard shell header: icon tile beside page title (sizes follow type ramp) */
+    --dashboard-header-mark-icon-size: 1.25rem;
+    --dashboard-header-mark-icon-padding: var(--dashboard-space-sm);
+
     /* Spacing rhythm (gallery + layout) */
     --dashboard-space-xs: 0.25rem;
     --dashboard-space-sm: 0.5rem;
@@ -117,6 +121,28 @@
     --dashboard-motion-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
 
     --dashboard-focus-ring-offset: 2px;
+
+    /* Dashboard mention filter reset icon: orange wash when enabled (dirty filters vs baseline) */
+    --dashboard-mention-filters-reset-enabled-background: color-mix(
+        in oklab,
+        var(--warning) 22%,
+        transparent
+    );
+    --dashboard-mention-filters-reset-enabled-background-hover: color-mix(
+        in oklab,
+        var(--warning) 36%,
+        transparent
+    );
+    --dashboard-mention-filters-reset-enabled-border: color-mix(
+        in oklab,
+        var(--warning) 48%,
+        transparent
+    );
+    --dashboard-mention-filters-reset-enabled-border-hover: color-mix(
+        in oklab,
+        var(--warning) 58%,
+        transparent
+    );
 
     /* Mentions table — Yes: neutral tray; rim = same hue/chroma as --success (alpha wash — no color-mix into C=0, avoids yellow/orange skew) */
     --mention-yes-chip-bg: oklch(1 0 0);
@@ -239,6 +265,27 @@
     --dashboard-motion-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
 
     --dashboard-focus-ring-offset: 2px;
+
+    --dashboard-mention-filters-reset-enabled-background: color-mix(
+        in oklab,
+        var(--warning) 18%,
+        transparent
+    );
+    --dashboard-mention-filters-reset-enabled-background-hover: color-mix(
+        in oklab,
+        var(--warning) 30%,
+        transparent
+    );
+    --dashboard-mention-filters-reset-enabled-border: color-mix(
+        in oklab,
+        var(--warning) 42%,
+        transparent
+    );
+    --dashboard-mention-filters-reset-enabled-border-hover: color-mix(
+        in oklab,
+        var(--warning) 55%,
+        transparent
+    );
 
     --mention-yes-chip-bg: oklch(0.14 0 0);
     --mention-yes-chip-border: oklch(from var(--success) l c h / 62%);

@@ -7,7 +7,7 @@ import { Toaster } from "sonner";
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "Brand Mentions Dashboard",
+  title: "Track Your Brand",
 };
 
 export default function RootLayout({

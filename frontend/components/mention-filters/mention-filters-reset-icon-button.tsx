@@ -26,7 +26,10 @@ export function MentionFiltersResetIconButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "shrink-0 border-border/50 bg-muted/20 hover:bg-muted/40 transition-colors",
+        "shrink-0 transition-colors",
+        disabled
+          ? "border-border/50 bg-muted/20 text-muted-foreground hover:bg-muted/40"
+          : "border-[color:var(--dashboard-mention-filters-reset-enabled-border)] bg-[color:var(--dashboard-mention-filters-reset-enabled-background)] text-warning-foreground hover:border-[color:var(--dashboard-mention-filters-reset-enabled-border-hover)] hover:bg-[color:var(--dashboard-mention-filters-reset-enabled-background-hover)]",
         className
       )}
     >

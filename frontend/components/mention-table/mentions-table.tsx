@@ -29,6 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Chip } from "@/components/ui/chip";
+import { MentionCitationDomainLink } from "@/components/mention-table/mention-citation-domain-link";
 import { MentionModelChip } from "@/components/mention-table/mention-model-chip";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,7 +48,7 @@ import {
   DashboardBodyText,
   DashboardSupportingText,
 } from "@/components/ui/typography";
-import { ChevronLeft, ChevronRight, ExternalLink, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { chipToneForMentionSentimentValue } from "@/lib/helpers/mention-table-chip-tones";
 import type { Mention, MentionFilters } from "@/models";
 import {
@@ -136,17 +137,7 @@ const mentionColumns = [
     cell: (info) => {
       const url = info.getValue();
       if (!url) return "—";
-      return (
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 font-medium text-info underline-offset-2 hover:text-info/80 hover:underline"
-        >
-          <ExternalLink className="size-4" />
-          Link
-        </a>
-      );
+      return <MentionCitationDomainLink citationUrl={url} />;
     },
   }),
   columnHelper.accessor("created_at", {
