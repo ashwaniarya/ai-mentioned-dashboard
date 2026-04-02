@@ -3,14 +3,6 @@ import { DashboardPageClient } from "@/app/dashboard-page-client";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { Skeleton } from "@/components/ui/skeleton";
 
-function DashboardFiltersSkeleton() {
-  return (
-    <div className="mx-auto max-w-7xl px-dashboard-md pb-dashboard-md sm:px-dashboard-lg sm:pb-dashboard-lg lg:px-dashboard-xl">
-      <Skeleton className="h-14 w-full rounded-xl sm:h-24 sm:rounded-lg" />
-    </div>
-  );
-}
-
 export default function DashboardPage() {
   return (
     <Suspense
@@ -18,7 +10,6 @@ export default function DashboardPage() {
         <>
           <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <DashboardHeader />
-            <DashboardFiltersSkeleton />
           </div>
           <main className="mx-auto max-w-7xl space-y-dashboard-xl p-dashboard-md sm:p-dashboard-lg lg:p-dashboard-xl">
             <Skeleton className="h-72 w-full rounded-lg" />
