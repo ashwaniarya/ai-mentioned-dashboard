@@ -86,6 +86,72 @@ export function isMentionDateRangeOrderInvalid(
   return dateFrom > dateTo;
 }
 
+/** Payload from the date-range preset popover when the user clicks Apply. */
+export type MentionDateRangePopoverApplySelection = {
+  preset: MentionDateRangePreset;
+  dateFrom?: string;
+  dateTo?: string;
+};
+
+/**
+ * Applies a date-range choice the same way the legacy dashboard handlers did:
+ * Maximum clears bounds; rolling presets get concrete local-calendar dates at `anchorDate`;
+ * Custom sets `date_from` / `date_to` from the selection.
+ */
+export function nextMentionFiltersForDateRangeApply(
+  currentFilters: MentionFilters,
+  selection: MentionDateRangePopoverApplySelection,
+  anchorDate: Date
+): MentionFilters {
+  const { preset, dateFrom, dateTo } = selection;
+
+  if (preset === DATE_PRESET.MAXIMUM) {
+    const { date_from: _omitFrom, date_to: _omitTo, ...rest } = currentFilters;
+    return {
+      ...rest,
+      mention_date_range_preset: DATE_PRESET.MAXIMUM,
+    };
+  }
+
+  if (preset in MENTION_ROLLING_PRESET_DAY_COUNTS) {
+    const range = getMentionDateRangeForMentionDateRangeRollingPreset(
+      anchorDate,
+      preset as MentionRollingDateRangePreset
+    );
+    return {
+      ...currentFilters,
+      ...range,
+      mention_date_range_preset: preset,
+    };
+  }
+
+  if (preset === DATE_PRESET.CUSTOM) {
+    return {
+      ...currentFilters,
+      date_from: dateFrom,
+      date_to: dateTo,
+      mention_date_range_preset: DATE_PRESET.CUSTOM,
+    };
+  }
+
+  return currentFilters;
+}
+
+/** Maps `MentionFilters` into the shape expected by `DateRangePresetPopover`. */
+export function mentionFiltersToDateRangePresetPopoverValue(
+  filters: MentionFilters
+): {
+  preset: string;
+  dateFrom?: string;
+  dateTo?: string;
+} {
+  return {
+    preset: filters.mention_date_range_preset ?? DATE_PRESET.MAXIMUM,
+    dateFrom: filters.date_from,
+    dateTo: filters.date_to,
+  };
+}
+
 // =============================================================================
 // Dashboard state
 // =============================================================================

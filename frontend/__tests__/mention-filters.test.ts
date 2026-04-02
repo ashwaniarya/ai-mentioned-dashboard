@@ -1,8 +1,8 @@
 /**
  * Manual smoke (dashboard + backend running):
  * Open `/` → clean URL (no date params); chart + table load full range (Maximum).
- * Choose Last 7 days → URL gains date_range_preset + date_from/date_to; data narrows.
- * Edit From → preset becomes custom (no preset key in URL, dates only); Reset → Maximum.
+ * Open Date range popover → pick Last 7 days → Apply → URL gains preset + dates; data narrows.
+ * Custom → expand From/To → valid range → Apply; Close or outside click discards draft (no URL change).
  * Trend chart Group By → `chart_group_by=week` when Week; Day omits the param.
  * Browser Back/Forward → filters follow URL.
  *
@@ -26,7 +26,9 @@ import {
   isMentionDateRangeOrderInvalid,
   mentionFiltersForApiRequestBody,
   mentionFiltersShallowEqualForDashboard,
+  mentionFiltersToDateRangePresetPopoverValue,
   mentionFiltersToSortedQueryString,
+  nextMentionFiltersForDateRangeApply,
   normalizeDashboardMentionFiltersAfterParse,
   parseMentionFiltersFromSearchParams,
 } from "@/lib/helpers/mention-filters";
@@ -441,6 +443,74 @@ describe("normalizeDashboardMentionFiltersAfterParse", () => {
         new Date()
       )
     ).toEqual({ mention_date_range_preset: "custom" });
+  });
+});
+
+describe("nextMentionFiltersForDateRangeApply", () => {
+  const anchorDate = new Date(2026, 3, 15, 12, 0, 0);
+
+  it("applies Maximum by clearing dates", () => {
+    const next = nextMentionFiltersForDateRangeApply(
+      {
+        model: "claude",
+        mention_date_range_preset: "last_7_days",
+        date_from: "2026-04-01",
+        date_to: "2026-04-15",
+      },
+      { preset: DATE_PRESET.MAXIMUM },
+      anchorDate
+    );
+    expect(next).toEqual({
+      model: "claude",
+      mention_date_range_preset: DATE_PRESET.MAXIMUM,
+    });
+  });
+
+  it("applies rolling preset with concrete range at anchor", () => {
+    const next = nextMentionFiltersForDateRangeApply(
+      { mention_date_range_preset: "maximum" },
+      { preset: "last_7_days" },
+      anchorDate
+    );
+    expect(next.mention_date_range_preset).toBe("last_7_days");
+    expect(next.date_from).toBe("2026-04-09");
+    expect(next.date_to).toBe("2026-04-15");
+  });
+
+  it("applies Custom with explicit bounds", () => {
+    const next = nextMentionFiltersForDateRangeApply(
+      { mention_date_range_preset: "maximum" },
+      {
+        preset: DATE_PRESET.CUSTOM,
+        dateFrom: "2026-01-01",
+        dateTo: "2026-01-31",
+      },
+      anchorDate
+    );
+    expect(next).toEqual({
+      mention_date_range_preset: DATE_PRESET.CUSTOM,
+      date_from: "2026-01-01",
+      date_to: "2026-01-31",
+    });
+  });
+});
+
+describe("mentionFiltersToDateRangePresetPopoverValue", () => {
+  it("defaults missing preset to maximum and passes through dates", () => {
+    expect(mentionFiltersToDateRangePresetPopoverValue({})).toEqual({
+      preset: DATE_PRESET.MAXIMUM,
+    });
+    expect(
+      mentionFiltersToDateRangePresetPopoverValue({
+        mention_date_range_preset: "custom",
+        date_from: "2026-02-01",
+        date_to: "2026-02-28",
+      })
+    ).toEqual({
+      preset: "custom",
+      dateFrom: "2026-02-01",
+      dateTo: "2026-02-28",
+    });
   });
 });
 

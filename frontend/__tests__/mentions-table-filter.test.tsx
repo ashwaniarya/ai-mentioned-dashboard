@@ -1,12 +1,16 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MentionsTableFilter } from "@/components/mention-table/mentions-table-filter";
 import {
   getDashboardBaselineMentionFilters,
   normalizeDashboardMentionFiltersAfterParse,
 } from "@/lib/helpers/mention-filters";
 import { DATE_PRESET } from "@/config";
-import { dashboardMentionFilterHorizontalControlRowClasses } from "@/components/mention-filters/use-dashboard-mention-filter-shared-handlers";
+import {
+  dashboardMentionDateRangePopoverContentTestId,
+  dashboardMentionDateRangePopoverTriggerTestId,
+  dashboardMentionFilterHorizontalControlRowClasses,
+} from "@/components/mention-filters/use-dashboard-mention-filter-shared-handlers";
 
 function expectElementUsesDashboardMentionFilterHorizontalControlRow(element: Element) {
   for (const token of dashboardMentionFilterHorizontalControlRowClasses.split(/\s+/).filter(Boolean)) {
@@ -15,32 +19,39 @@ function expectElementUsesDashboardMentionFilterHorizontalControlRow(element: El
 }
 
 describe("MentionsTableFilter", () => {
-  it("shows From and To when Custom is chosen", () => {
+  it("shows From date and To date inside the date popover when Custom is chosen", () => {
     const filters = normalizeDashboardMentionFiltersAfterParse(
       { mention_date_range_preset: DATE_PRESET.CUSTOM },
       new Date()
     );
     render(<MentionsTableFilter filters={filters} onFiltersChange={vi.fn()} />);
-    expect(screen.getByText("From")).toBeInTheDocument();
-    expect(screen.getByText("To")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId(dashboardMentionDateRangePopoverTriggerTestId));
+
+    const surface = screen.getByTestId(dashboardMentionDateRangePopoverContentTestId);
+    expect(within(surface).getByLabelText(/^from date$/i)).toBeInTheDocument();
+    expect(within(surface).getByLabelText(/^to date$/i)).toBeInTheDocument();
   });
 
-  it("keeps reset and Date Range in one horizontal row and From/To in a second row when Custom", () => {
+  it("keeps reset and Date range trigger in one horizontal row; From/To only inside popover when Custom", () => {
     const filters = normalizeDashboardMentionFiltersAfterParse(
       { mention_date_range_preset: DATE_PRESET.CUSTOM },
       new Date()
     );
-    render(<MentionsTableFilter filters={filters} onFiltersChange={vi.fn()} />);
+    const { container } = render(<MentionsTableFilter filters={filters} onFiltersChange={vi.fn()} />);
 
     const resetButton = screen.getByRole("button", { name: /reset table filters/i });
-    const resetAndDateRow = resetButton.parentElement!.parentElement!;
+    const resetAndDateRow = resetButton.parentElement!;
     expectElementUsesDashboardMentionFilterHorizontalControlRow(resetAndDateRow);
-    expect(resetAndDateRow.textContent).toContain("Date Range");
+    expect(
+      within(resetAndDateRow).getByRole("button", { name: /date range/i })
+    ).toBeInTheDocument();
 
-    const fromLabel = screen.getByText("From");
-    const fromToRow = fromLabel.parentElement!.parentElement!;
-    expectElementUsesDashboardMentionFilterHorizontalControlRow(fromToRow);
-    expect(fromToRow.contains(screen.getByText("To"))).toBe(true);
+    expect(container.querySelectorAll('input[type="date"]')).toHaveLength(0);
+
+    fireEvent.click(screen.getByTestId(dashboardMentionDateRangePopoverTriggerTestId));
+    const surface = screen.getByTestId(dashboardMentionDateRangePopoverContentTestId);
+    expect(within(surface).getAllByDisplayValue("")).toHaveLength(2);
   });
 
   it("reset calls onFiltersChange with normalized dashboard baseline", () => {

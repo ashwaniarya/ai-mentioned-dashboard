@@ -22,6 +22,9 @@ export const MENTION_FILTER_DATE_RANGE_PRESET_QUERY_KEY = "date_range_preset";
 export const MENTION_FILTER_INVALID_DATE_RANGE_MESSAGE =
   "Start date must be on or before end date.";
 
+/** Between ISO `date_from` and `date_to` on the date-range popover trigger when preset is custom. */
+export const DASHBOARD_DATE_RANGE_TRIGGER_CUSTOM_RANGE_DISPLAY_SEPARATOR = " – ";
+
 export type FilterChoice<Value extends string = string> = {
   value: Value;
   label: string;

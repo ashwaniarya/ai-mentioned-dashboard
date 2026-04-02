@@ -40,7 +40,7 @@
 
     --chart-1: oklch(0.52 0.2 var(--brand-primary-hue));
     /* Secondary series: warm amber — higher chroma + lighter than “smoky” mid-L; L capped for solid chip + white */
-    --chart-2: oklch(0.62 0.195 78);
+    --chart-2: #e27a2d;
     --chart-3: oklch(0.62 0.17 42);
     --chart-4: oklch(0.56 0.15 328);
     --chart-5: oklch(0.66 0.14 128);
@@ -143,6 +143,10 @@
         var(--warning) 58%,
         transparent
     );
+
+    /* Trend chart "Group by" segment — active thumb (semantic alias; follows light/dark --primary) */
+    --dashboard-chart-group-by-segment-selected-background: var(--primary);
+    --dashboard-chart-group-by-segment-selected-foreground: var(--primary-foreground);
 
     /* Mentions table — Yes: neutral tray; rim = same hue/chroma as --success (alpha wash — no color-mix into C=0, avoids yellow/orange skew) */
     --mention-yes-chip-bg: oklch(1 0 0);

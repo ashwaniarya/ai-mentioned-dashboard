@@ -126,9 +126,8 @@ describe("TrendChart", () => {
     } as ReturnType<typeof brandMentionsApiService.useTrends>);
 
     render(<TrendChart />);
-    expect(screen.getByText("Date Range")).toBeInTheDocument();
-    expect(screen.getByText("Group By")).toBeInTheDocument();
-    expect(screen.getByRole("radiogroup", { name: "Group By" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /date range/i })).toBeInTheDocument();
+    expect(screen.getByRole("radiogroup", { name: /group by/i })).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "Day" })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByRole("radio", { name: "Week" })).toHaveAttribute("aria-checked", "false");
   });
