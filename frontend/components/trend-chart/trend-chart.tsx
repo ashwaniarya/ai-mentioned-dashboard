@@ -1,5 +1,14 @@
 "use client";
 
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MENTION_FILTER_DEBOUNCE_INTERVAL_MS } from "@/config";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { buildMentionFiltersForApi } from "@/lib/helpers/mention-filter-api";
+import { normalizeDashboardMentionFiltersAfterParse, mentionFiltersShallowEqualForDashboard } from "@/lib/helpers/mention-filter-default-date-range";
+import { parseMentionFiltersFromSearchParams, mentionFiltersToSortedQueryString, writeMentionFiltersToSearchParams } from "@/lib/helpers/mention-filters-url";
+import { TrendChartFilter } from "@/components/trend-chart/trend-chart-filter";
+
 import {
   AreaChart,
   Area,
@@ -12,9 +21,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   DashboardBodyText,
@@ -28,10 +34,6 @@ import {
   useTrendChartData,
   type TrendChartViewState,
 } from "@/hooks/use-trend-chart-data";
-
-interface TrendChartProps {
-  filtersForApi: MentionFilters;
-}
 
 const TREND_CHART_HEIGHT_PX = 280;
 const MOBILE_TREND_CHART_Y_AXIS_WIDTH_PX = 32;
@@ -259,36 +261,82 @@ function TrendChartPresentation({
   }
 
   return (
-    <Card className="overflow-hidden border-border/80 shadow-sm">
-      <CardHeader>
-        <CardTitle>Mention Trends</CardTitle>
-        <CardDescription>
-          <DashboardSupportingText>
-            Total queries compared to rows where your brand was mentioned over
-            the selected range.
-          </DashboardSupportingText>
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <LoadingFade
-          isLoading={viewState.status === "loading"}
-          loadingContent={loadingContent}
-        >
-          {renderMainContent()}
-        </LoadingFade>
-      </CardContent>
-    </Card>
+    <LoadingFade
+      isLoading={viewState.status === "loading"}
+      loadingContent={loadingContent}
+    >
+      {renderMainContent()}
+    </LoadingFade>
   );
 }
 
-export function TrendChart({ filtersForApi }: TrendChartProps) {
-  const { viewState } = useTrendChartData(filtersForApi);
+
+
+export function TrendChart() {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const lastReplacedSortedQueryRef = useRef<string | null>(null);
+
+  const [filters, setFilters] = useState<MentionFilters>(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    const parsed = parseMentionFiltersFromSearchParams(params, "chart_");
+    return normalizeDashboardMentionFiltersAfterParse(
+      parsed,
+      new Date()
+    );
+  });
+
+  const debouncedFilters = useDebouncedValue(
+    filters,
+    MENTION_FILTER_DEBOUNCE_INTERVAL_MS
+  );
+
+  const filtersForApi = useMemo(
+    () => buildMentionFiltersForApi(debouncedFilters),
+    [debouncedFilters]
+  );
+
+  const handleFiltersChange = useCallback((newFilters: MentionFilters) => {
+    setFilters(normalizeDashboardMentionFiltersAfterParse(newFilters, new Date()));
+  }, []);
+
+  const searchParamsSnapshot = searchParams.toString();
+  useEffect(() => {
+    const params = new URLSearchParams(searchParamsSnapshot);
+    const fromUrl = normalizeDashboardMentionFiltersAfterParse(
+      parseMentionFiltersFromSearchParams(params, "chart_"),
+      new Date()
+    );
+    setFilters((previous) =>
+      mentionFiltersShallowEqualForDashboard(previous, fromUrl) ? previous : fromUrl
+    );
+  }, [searchParamsSnapshot]);
+
+  useEffect(() => {
+    const nextSorted = mentionFiltersToSortedQueryString(filters, "chart_");
+    if (nextSorted === lastReplacedSortedQueryRef.current) return;
+    lastReplacedSortedQueryRef.current = nextSorted;
+
+    const currentParams = new URLSearchParams(searchParams.toString());
+    const newParams = writeMentionFiltersToSearchParams(currentParams, filters, "chart_");
+    
+    const query = newParams.toString() ? `?${newParams.toString()}` : "";
+    router.replace(`${pathname}${query}`, { scroll: false });
+  }, [filters, pathname, router, searchParams]);
+
+  const { viewState } = useTrendChartData(filtersForApi, debouncedFilters.group_by || "day");
   const isCompactTrendChartLayout = useCompactTrendChartLayout();
 
   return (
-    <TrendChartPresentation
-      viewState={viewState}
-      isCompactTrendChartLayout={isCompactTrendChartLayout}
-    />
+    <Card className="overflow-hidden border-border/80 shadow-sm">
+      <CardContent className="p-4 sm:p-6 space-y-6">
+        <TrendChartFilter filters={filters} onFiltersChange={handleFiltersChange} />
+        <TrendChartPresentation
+          viewState={viewState}
+          isCompactTrendChartLayout={isCompactTrendChartLayout}
+        />
+      </CardContent>
+    </Card>
   );
 }

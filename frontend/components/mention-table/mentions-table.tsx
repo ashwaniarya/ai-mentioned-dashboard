@@ -1,5 +1,14 @@
 "use client";
 
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MENTION_FILTER_DEBOUNCE_INTERVAL_MS } from "@/config";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { buildMentionFiltersForApi } from "@/lib/helpers/mention-filter-api";
+import { normalizeDashboardMentionFiltersAfterParse, getDashboardBaselineMentionFilters, mentionFiltersShallowEqualForDashboard } from "@/lib/helpers/mention-filter-default-date-range";
+import { parseMentionFiltersFromSearchParams, mentionFiltersToSortedQueryString, writeMentionFiltersToSearchParams } from "@/lib/helpers/mention-filters-url";
+import { MentionsTableFilter } from "@/components/mention-table/mentions-table-filter";
+
 import {
   useReactTable,
   getCoreRowModel,
@@ -15,7 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Chip } from "@/components/ui/chip";
-import { MentionModelChip } from "@/components/mention-model-chip";
+import { MentionModelChip } from "@/components/mention-table/mention-model-chip";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -28,9 +37,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   DashboardBodyText,
@@ -292,11 +298,60 @@ function MentionsTablePagination({
 
 // ── Main component ────────────────────────────────────────────────────
 
-interface MentionsTableProps {
-  filtersForApi: MentionFilters;
-}
 
-export function MentionsTable({ filtersForApi }: MentionsTableProps) {
+export function MentionsTable() {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const lastReplacedSortedQueryRef = useRef<string | null>(null);
+
+  const [filters, setFilters] = useState<MentionFilters>(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    const parsed = parseMentionFiltersFromSearchParams(params, "table_");
+    return normalizeDashboardMentionFiltersAfterParse(
+      parsed,
+      new Date()
+    );
+  });
+
+  const debouncedFilters = useDebouncedValue(
+    filters,
+    MENTION_FILTER_DEBOUNCE_INTERVAL_MS
+  );
+
+  const filtersForApi = useMemo(
+    () => buildMentionFiltersForApi(debouncedFilters),
+    [debouncedFilters]
+  );
+
+  const handleFiltersChange = useCallback((newFilters: MentionFilters) => {
+    setFilters(normalizeDashboardMentionFiltersAfterParse(newFilters, new Date()));
+  }, []);
+
+  const searchParamsSnapshot = searchParams.toString();
+  useEffect(() => {
+    const params = new URLSearchParams(searchParamsSnapshot);
+    const fromUrl = normalizeDashboardMentionFiltersAfterParse(
+      parseMentionFiltersFromSearchParams(params, "table_"),
+      new Date()
+    );
+    setFilters((previous) =>
+      mentionFiltersShallowEqualForDashboard(previous, fromUrl) ? previous : fromUrl
+    );
+  }, [searchParamsSnapshot]);
+
+  useEffect(() => {
+    const nextSorted = mentionFiltersToSortedQueryString(filters, "table_");
+    if (nextSorted === lastReplacedSortedQueryRef.current) return;
+    lastReplacedSortedQueryRef.current = nextSorted;
+
+    const currentParams = new URLSearchParams(searchParams.toString());
+    const newParams = writeMentionFiltersToSearchParams(currentParams, filters, "table_");
+    
+    const query = newParams.toString() ? `?${newParams.toString()}` : "";
+    router.replace(`${pathname}${query}`, { scroll: false });
+  }, [filters, pathname, router, searchParams]);
+
   const { viewState, page, perPage, totalPages, goToPage, changePerPage } =
     useMentionsTableData(filtersForApi);
 
@@ -339,16 +394,10 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
 
   return (
     <Card className="overflow-hidden border-border/80 shadow-dashboard-subtle">
-      <CardHeader>
-        <CardTitle>Brand Mentions</CardTitle>
-        <CardDescription>
-          <DashboardSupportingText>
-            Paginated results for your current filters; open citations in a new
-            tab.
-          </DashboardSupportingText>
-        </CardDescription>
-      </CardHeader>
-      {renderBody(viewState)}
+      <CardContent className="p-4 sm:p-6 space-y-6">
+        <MentionsTableFilter filters={filters} onFiltersChange={handleFiltersChange} />
+        {renderBody(viewState)}
+      </CardContent>
     </Card>
   );
 
@@ -356,11 +405,13 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
     switch (state.status) {
       case "loading":
         return (
-          <MentionsTableSkeleton
-            tableHeader={tableHeader}
-            columnCount={mentionColumns.length}
-            rowCount={perPage}
-          />
+          <div className="pt-2">
+            <MentionsTableSkeleton
+              tableHeader={tableHeader}
+              columnCount={mentionColumns.length}
+              rowCount={perPage}
+            />
+          </div>
         );
 
       case "empty":
@@ -374,21 +425,21 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
 
       case "error":
         return (
-          <CardContent className="flex flex-col items-center justify-center bg-muted/20 py-14">
+          <div className="flex flex-col items-center justify-center rounded-lg bg-muted/20 py-14">
             <DashboardBodyText className="font-medium">
               Unable to load brand mentions.
             </DashboardBodyText>
             <DashboardSupportingText className="mt-1 block">
               Please try again in a moment.
             </DashboardSupportingText>
-          </CardContent>
+          </div>
         );
 
       case "ready":
         return (
           <>
-            <div className="relative">
-              <CardContent className="p-0">
+            <div className="relative rounded-lg border border-border/70 overflow-hidden">
+              <div className="p-0">
                 <Table>
                   {tableHeader}
                   <TableBody>
@@ -411,7 +462,7 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
                     ))}
                   </TableBody>
                 </Table>
-              </CardContent>
+              </div>
               {state.isRefetching && <RefetchingOverlay />}
             </div>
 
@@ -429,3 +480,4 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
     }
   }
 }
+

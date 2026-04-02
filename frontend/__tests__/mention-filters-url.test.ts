@@ -3,6 +3,7 @@
  * Open `/` → clean URL (no date params); chart + table load full range (Maximum).
  * Choose Last 7 days → URL gains date_range_preset + date_from/date_to; data narrows.
  * Edit From → preset becomes custom (no preset key in URL, dates only); Reset → Maximum.
+ * Trend chart Group By → `chart_group_by=week` when Week; Day omits the param.
  * Browser Back/Forward → filters follow URL.
  */
 import { describe, expect, it } from "vitest";
@@ -33,6 +34,37 @@ describe("parseMentionFiltersFromSearchParams", () => {
       date_from: "2026-01-01",
       date_to: "2026-01-31",
       mention_date_range_preset: "custom",
+    });
+  });
+
+  it("parses group_by when valid and ignores invalid values", () => {
+    expect(
+      parseMentionFiltersFromSearchParams(
+        new URLSearchParams({ group_by: "week" })
+      )
+    ).toEqual({
+      group_by: "week",
+      mention_date_range_preset: "maximum",
+    });
+
+    expect(
+      parseMentionFiltersFromSearchParams(
+        new URLSearchParams({ group_by: "month" })
+      )
+    ).toEqual({
+      mention_date_range_preset: "maximum",
+    });
+  });
+
+  it("parses namespaced chart_group_by", () => {
+    expect(
+      parseMentionFiltersFromSearchParams(
+        new URLSearchParams({ chart_group_by: "week" }),
+        "chart_"
+      )
+    ).toEqual({
+      group_by: "week",
+      mention_date_range_preset: "maximum",
     });
   });
 
@@ -170,6 +202,20 @@ describe("mentionFilters round-trip via sorted query string", () => {
     const serialized = mentionFiltersToSortedQueryString(filters);
     const again = parseMentionFiltersFromSearchParams(
       new URLSearchParams(serialized)
+    );
+    expect(again).toEqual(filters);
+  });
+
+  it("round-trips group_by with chart_ namespace", () => {
+    const filters = {
+      group_by: "week" as const,
+      mention_date_range_preset: "maximum" as const,
+    };
+    const serialized = mentionFiltersToSortedQueryString(filters, "chart_");
+    expect(serialized).toContain("chart_group_by=week");
+    const again = parseMentionFiltersFromSearchParams(
+      new URLSearchParams(serialized),
+      "chart_"
     );
     expect(again).toEqual(filters);
   });

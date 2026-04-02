@@ -57,8 +57,9 @@ export function getDashboardBaselineMentionFilters(): MentionFilters {
 }
 
 /**
- * After URL parse, ensure rolling presets have both dates; Maximum has none;
- * both dates empty implies Maximum.
+ * After URL parse or UI change, ensure rolling presets have both dates; Maximum has none.
+ * Custom with no dates is kept so the user can open From/To after choosing Custom.
+ * Unknown preset with no dates collapses to Maximum.
  */
 export function normalizeDashboardMentionFiltersAfterParse(
   filters: MentionFilters,
@@ -85,6 +86,10 @@ export function normalizeDashboardMentionFiltersAfterParse(
     return { ...filters, mention_date_range_preset: preset };
   }
 
+  if (preset === DATE_PRESET.CUSTOM) {
+    return { ...filters, mention_date_range_preset: DATE_PRESET.CUSTOM };
+  }
+
   if (filters.date_from === undefined && filters.date_to === undefined) {
     return {
       ...filters,
@@ -100,6 +105,9 @@ export function mentionFiltersShallowEqualForDashboard(
   left: MentionFilters,
   right: MentionFilters
 ): boolean {
+  const leftGroupBy = left.group_by ?? "day";
+  const rightGroupBy = right.group_by ?? "day";
+
   return (
     left.model === right.model &&
     left.sentiment === right.sentiment &&
@@ -107,6 +115,7 @@ export function mentionFiltersShallowEqualForDashboard(
     left.date_from === right.date_from &&
     left.date_to === right.date_to &&
     (left.mention_date_range_preset ?? DATE_PRESET.MAXIMUM) ===
-      (right.mention_date_range_preset ?? DATE_PRESET.MAXIMUM)
+      (right.mention_date_range_preset ?? DATE_PRESET.MAXIMUM) &&
+    leftGroupBy === rightGroupBy
   );
 }

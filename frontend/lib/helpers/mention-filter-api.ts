@@ -2,6 +2,7 @@ import type { MentionFilters } from "@/models";
 
 const MENTION_FILTER_KEYS_EXCLUDED_FROM_API_REQUEST_BODY = new Set([
   "mention_date_range_preset",
+  "group_by",
 ]);
 
 /** True when both ISO dates are set and start is after end (YYYY-MM-DD compares lexicographically). */
@@ -26,7 +27,7 @@ export function buildMentionFiltersForApi(
     next = rest;
   }
 
-  const { mention_date_range_preset: _omitPreset, ...forApi } = next;
+  const { mention_date_range_preset: _omitPreset, group_by: _omitGroupBy, ...forApi } = next;
   return forApi;
 }
 

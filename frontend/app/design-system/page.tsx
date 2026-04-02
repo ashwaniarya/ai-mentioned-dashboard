@@ -4,7 +4,7 @@ import { notFound } from "next/navigation"
 import { DesignSystemBackLink } from "@/app/design-system/design-system-back-link"
 import { DesignSystemSelectDemo } from "@/app/design-system/design-system-select-demo"
 import { DesignSystemThemeToggle } from "@/app/design-system/design-system-theme-toggle"
-import { MentionModelChip } from "@/components/mention-model-chip"
+import { MentionModelChip } from "@/components/mention-table/mention-model-chip"
 import { Badge } from "@/components/ui/badge"
 import { Chip, type ChipTone } from "@/components/ui/chip"
 import { Button } from "@/components/ui/button"
@@ -251,8 +251,8 @@ export default function DesignSystemPage() {
 
           <DashboardSubsectionHeading>Semantic colors</DashboardSubsectionHeading>
           <DashboardSupportingText>
-            Violet-forward brand (~285° hue) with startup-friendly chroma; status
-            pairs for product UI.
+            Primary accent is brand blue (Facebook #1877F2 axis via design tokens);
+            neutrals stay violet-tinted; status pairs for product UI.
           </DashboardSupportingText>
           <div className="grid gap-dashboard-md sm:grid-cols-2 lg:grid-cols-3">
             {colorTokens.map(({ name, utility, fg }) => (

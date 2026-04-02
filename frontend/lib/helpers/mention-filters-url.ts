@@ -6,6 +6,7 @@ import {
   mentionDateRangePresetValueSet,
   mentionModelValueSet,
   mentionSentimentValueSet,
+  mentionGroupByValueSet,
 } from "@/config";
 import type { MentionFilters } from "@/models";
 import type { MentionDateRangePreset } from "@/config";
@@ -28,8 +29,11 @@ function isValidIsoCalendarDateStringForMentionFilter(value: string): boolean {
 }
 
 /** Stable query string for comparison (sorted keys, sorted duplicate values). */
-export function mentionFiltersToSortedQueryString(filters: MentionFilters): string {
-  const params = mentionFiltersToUrlSearchParams(filters);
+export function mentionFiltersToSortedQueryString(
+  filters: MentionFilters,
+  namespace: string = ""
+): string {
+  const params = mentionFiltersToUrlSearchParams(filters, namespace);
   return sortedUrlSearchParamsString(params);
 }
 
@@ -43,56 +47,19 @@ export function sortedUrlSearchParamsString(params: URLSearchParams): string {
   return new URLSearchParams(entries).toString();
 }
 
-/** Converts a MentionFilters object into URLSearchParams, encoding date-range preset logic. */
-export function mentionFiltersToUrlSearchParams(
-  filters: MentionFilters
-): URLSearchParams {
-  const params = new URLSearchParams();
-  if (filters.model !== undefined) params.set("model", filters.model);
-  if (filters.sentiment !== undefined)
-    params.set("sentiment", filters.sentiment);
-  if (filters.mentioned === true) params.set("mentioned", MENTIONED_VALUE.YES);
-  if (filters.mentioned === false) params.set("mentioned", MENTIONED_VALUE.NO);
-
-  let preset: MentionDateRangePreset =
-    (filters.mention_date_range_preset as MentionDateRangePreset) ?? DATE_PRESET.MAXIMUM;
-  if (
-    preset === DATE_PRESET.MAXIMUM &&
-    (filters.date_from !== undefined || filters.date_to !== undefined)
-  ) {
-    preset = DATE_PRESET.CUSTOM;
-  }
-
-  if (preset in MENTION_ROLLING_PRESET_DAY_COUNTS) {
-    params.set(
-      MENTION_FILTER_DATE_RANGE_PRESET_QUERY_KEY,
-      preset
-    );
-    if (filters.date_from !== undefined)
-      params.set("date_from", filters.date_from);
-    if (filters.date_to !== undefined) params.set("date_to", filters.date_to);
-  } else if (preset === DATE_PRESET.CUSTOM) {
-    if (filters.date_from !== undefined)
-      params.set("date_from", filters.date_from);
-    if (filters.date_to !== undefined) params.set("date_to", filters.date_to);
-  }
-  // maximum: omit dates and preset query key for a clean default URL
-
-  return params;
-}
-
 /** Parses URLSearchParams back into a validated MentionFilters object, falling back to safe defaults. */
 export function parseMentionFiltersFromSearchParams(
-  searchParams: URLSearchParams
+  searchParams: URLSearchParams,
+  namespace: string = ""
 ): MentionFilters {
   const out: MentionFilters = {};
 
-  const modelRaw = searchParams.get("model");
+  const modelRaw = searchParams.get(`${namespace}model`);
   if (modelRaw && mentionModelValueSet.has(modelRaw)) {
     out.model = modelRaw as MentionFilters["model"];
   }
 
-  const sentimentRaw = searchParams.get("sentiment");
+  const sentimentRaw = searchParams.get(`${namespace}sentiment`);
   if (
     sentimentRaw &&
     mentionSentimentValueSet.has(sentimentRaw)
@@ -100,20 +67,25 @@ export function parseMentionFiltersFromSearchParams(
     out.sentiment = sentimentRaw as MentionFilters["sentiment"];
   }
 
-  const mentionedRaw = searchParams.get("mentioned");
+  const mentionedRaw = searchParams.get(`${namespace}mentioned`);
   if (mentionedRaw === MENTIONED_VALUE.YES) out.mentioned = true;
   else if (mentionedRaw === MENTIONED_VALUE.NO) out.mentioned = false;
 
-  const dateFrom = searchParams.get("date_from");
+  const groupByRaw = searchParams.get(`${namespace}group_by`);
+  if (groupByRaw && mentionGroupByValueSet.has(groupByRaw)) {
+    out.group_by = groupByRaw as MentionFilters["group_by"];
+  }
+
+  const dateFrom = searchParams.get(`${namespace}date_from`);
   if (dateFrom && isValidIsoCalendarDateStringForMentionFilter(dateFrom))
     out.date_from = dateFrom;
 
-  const dateTo = searchParams.get("date_to");
+  const dateTo = searchParams.get(`${namespace}date_to`);
   if (dateTo && isValidIsoCalendarDateStringForMentionFilter(dateTo))
     out.date_to = dateTo;
 
   const presetRaw = searchParams.get(
-    MENTION_FILTER_DATE_RANGE_PRESET_QUERY_KEY
+    namespace + MENTION_FILTER_DATE_RANGE_PRESET_QUERY_KEY
   );
   let preset: MentionDateRangePreset | undefined;
   if (
@@ -138,4 +110,64 @@ export function parseMentionFiltersFromSearchParams(
 
   out.mention_date_range_preset = preset;
   return out;
+}
+
+/** Converts a MentionFilters object into URLSearchParams, encoding date-range preset logic. */
+export function mentionFiltersToUrlSearchParams(
+  filters: MentionFilters,
+  namespace: string = ""
+): URLSearchParams {
+  const params = new URLSearchParams();
+  if (filters.model !== undefined) params.set(`${namespace}model`, filters.model);
+  if (filters.sentiment !== undefined)
+    params.set(`${namespace}sentiment`, filters.sentiment);
+  if (filters.mentioned === true) params.set(`${namespace}mentioned`, MENTIONED_VALUE.YES);
+  if (filters.mentioned === false) params.set(`${namespace}mentioned`, MENTIONED_VALUE.NO);
+  if (filters.group_by !== undefined) params.set(`${namespace}group_by`, filters.group_by);
+
+  let preset: MentionDateRangePreset =
+    (filters.mention_date_range_preset as MentionDateRangePreset) ?? DATE_PRESET.MAXIMUM;
+  if (
+    preset === DATE_PRESET.MAXIMUM &&
+    (filters.date_from !== undefined || filters.date_to !== undefined)
+  ) {
+    preset = DATE_PRESET.CUSTOM;
+  }
+
+  if (preset in MENTION_ROLLING_PRESET_DAY_COUNTS) {
+    params.set(
+      namespace + MENTION_FILTER_DATE_RANGE_PRESET_QUERY_KEY,
+      preset
+    );
+    if (filters.date_from !== undefined)
+      params.set(`${namespace}date_from`, filters.date_from);
+    if (filters.date_to !== undefined) params.set(`${namespace}date_to`, filters.date_to);
+  } else if (preset === DATE_PRESET.CUSTOM) {
+    if (filters.date_from !== undefined)
+      params.set(`${namespace}date_from`, filters.date_from);
+    if (filters.date_to !== undefined) params.set(`${namespace}date_to`, filters.date_to);
+  }
+
+  return params;
+}
+
+/** Merges filters into the existing URLSearchParams, preserving other keys. */
+export function writeMentionFiltersToSearchParams(
+  existingParams: URLSearchParams,
+  filters: MentionFilters,
+  namespace: string
+): URLSearchParams {
+  const nextParams = new URLSearchParams(existingParams.toString());
+  
+  const keysToDelete = Array.from(nextParams.keys()).filter((key) => key.startsWith(namespace));
+  for (const key of keysToDelete) {
+    nextParams.delete(key);
+  }
+
+  const newParams = mentionFiltersToUrlSearchParams(filters, namespace);
+  newParams.forEach((value, key) => {
+    nextParams.set(key, value);
+  });
+
+  return nextParams;
 }

@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MentionModelIcon } from "@/components/mention-model-icon";
+import { MentionModelIcon } from "@/components/mention-table/mention-model-icon";
 import { labelForValue } from "@/lib/helpers/mention-filter-label-helpers";
 import {
   mentionModelBrandFromApiValue,

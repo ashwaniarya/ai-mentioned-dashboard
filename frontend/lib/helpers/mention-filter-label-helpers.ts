@@ -1,7 +1,7 @@
 import {
   type FilterChoice,
   mentionFilterChoices,
-} from "@/config/mention-filter-labels";
+} from "@/config";
 
 function humanizeUnknownValue(raw: string): string {
   const normalized = raw.trim();

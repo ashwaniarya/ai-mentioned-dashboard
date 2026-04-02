@@ -1,9 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import type { MentionFilters, TrendPoint } from "@/models";
 import { TrendChart } from "@/components/trend-chart";
-import type { TrendPoint } from "@/models";
+import { mentionFiltersToSortedQueryString } from "@/lib/helpers/mention-filters-url";
 import { brandMentionsApiService } from "@/services";
 import { toast } from "sonner";
+
+const navigationMocks = vi.hoisted(() => ({
+  searchParamsString: "",
+  replace: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(navigationMocks.searchParamsString),
+  usePathname: () => "/",
+  useRouter: () => ({ replace: navigationMocks.replace }),
+}));
 
 vi.mock("@/services", () => ({
   brandMentionsApiService: {
@@ -38,10 +50,25 @@ function setWindowWidth(width: number) {
 describe("TrendChart", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    navigationMocks.searchParamsString = "";
+    navigationMocks.replace.mockClear();
     setWindowWidth(1024);
   });
 
-  it("passes the full filter payload to useTrends", () => {
+  it("passes parsed URL chart filters to useTrends with group_by day by default", () => {
+    const chartFilters: MentionFilters = {
+      model: "chatgpt",
+      sentiment: "positive",
+      mentioned: true,
+      date_from: "2025-03-01",
+      date_to: "2025-03-31",
+      mention_date_range_preset: "last_30_days",
+    };
+    navigationMocks.searchParamsString = mentionFiltersToSortedQueryString(
+      chartFilters,
+      "chart_"
+    );
+
     useTrendsMock.mockReturnValue({
       data: { data: sampleTrends },
       error: undefined,
@@ -50,18 +77,7 @@ describe("TrendChart", () => {
       mutate: vi.fn(),
     } as ReturnType<typeof brandMentionsApiService.useTrends>);
 
-    render(
-      <TrendChart
-        filtersForApi={{
-          model: "chatgpt",
-          sentiment: "positive",
-          mentioned: true,
-          date_from: "2025-03-01",
-          date_to: "2025-03-31",
-          mention_date_range_preset: "last_30_days",
-        }}
-      />
-    );
+    render(<TrendChart />);
 
     expect(useTrendsMock).toHaveBeenCalledWith({
       group_by: "day",
@@ -75,7 +91,15 @@ describe("TrendChart", () => {
     });
   });
 
-  it("F10 — renders chart heading with data", () => {
+  it("passes group_by week when chart_group_by is in the URL", () => {
+    navigationMocks.searchParamsString = mentionFiltersToSortedQueryString(
+      {
+        group_by: "week",
+        mention_date_range_preset: "maximum",
+      },
+      "chart_"
+    );
+
     useTrendsMock.mockReturnValue({
       data: { data: sampleTrends },
       error: undefined,
@@ -84,8 +108,26 @@ describe("TrendChart", () => {
       mutate: vi.fn(),
     } as ReturnType<typeof brandMentionsApiService.useTrends>);
 
-    render(<TrendChart filtersForApi={{}} />);
-    expect(screen.getAllByText("Mention Trends").length).toBeGreaterThan(0);
+    render(<TrendChart />);
+
+    expect(useTrendsMock).toHaveBeenCalledWith({
+      group_by: "week",
+      filters: undefined,
+    });
+  });
+
+  it("renders trend chart filter controls", () => {
+    useTrendsMock.mockReturnValue({
+      data: { data: sampleTrends },
+      error: undefined,
+      isLoading: false,
+      isValidating: false,
+      mutate: vi.fn(),
+    } as ReturnType<typeof brandMentionsApiService.useTrends>);
+
+    render(<TrendChart />);
+    expect(screen.getByText("Date Range")).toBeInTheDocument();
+    expect(screen.getByText("Group By")).toBeInTheDocument();
   });
 
   it("shows empty message when data is empty", () => {
@@ -97,7 +139,7 @@ describe("TrendChart", () => {
       mutate: vi.fn(),
     } as ReturnType<typeof brandMentionsApiService.useTrends>);
 
-    render(<TrendChart filtersForApi={{}} />);
+    render(<TrendChart />);
     expect(screen.getByText(/no trend data/i)).toBeInTheDocument();
   });
 
@@ -110,7 +152,7 @@ describe("TrendChart", () => {
       mutate: vi.fn(),
     } as ReturnType<typeof brandMentionsApiService.useTrends>);
 
-    const { container } = render(<TrendChart filtersForApi={{}} />);
+    const { container } = render(<TrendChart />);
     const skeletons = container.querySelectorAll('[class*="skeleton"], [data-slot="skeleton"]');
     expect(skeletons.length).toBeGreaterThan(0);
   });
@@ -124,7 +166,7 @@ describe("TrendChart", () => {
       mutate: vi.fn(),
     } as ReturnType<typeof brandMentionsApiService.useTrends>);
 
-    render(<TrendChart filtersForApi={{}} />);
+    render(<TrendChart />);
 
     expect(screen.getByText(/unable to load mention trends/i)).toBeInTheDocument();
     expect(toastErrorMock).toHaveBeenCalledWith("Trend API failed");
@@ -140,7 +182,7 @@ describe("TrendChart", () => {
       mutate: vi.fn(),
     } as ReturnType<typeof brandMentionsApiService.useTrends>);
 
-    render(<TrendChart filtersForApi={{}} />);
+    render(<TrendChart />);
 
     await waitFor(() => {
       expect(screen.getByText("Total")).toBeInTheDocument();

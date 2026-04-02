@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
-import { MentionModelChip } from "@/components/mention-model-chip"
+import { MentionModelChip } from "@/components/mention-table/mention-model-chip"
 
 describe("MentionModelChip", () => {
   it("maps chatgpt to chatgpt brand", () => {

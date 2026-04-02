@@ -6,6 +6,8 @@ export interface MentionFilters {
   date_to?: string; // YYYY-MM-DD
   /** Dashboard / URL only; never sent to the backend. */
   mention_date_range_preset?: string;
+  /** Dashboard / URL only for TrendChart. */
+  group_by?: "day" | "week";
 }
 
 export interface MentionsRequest {

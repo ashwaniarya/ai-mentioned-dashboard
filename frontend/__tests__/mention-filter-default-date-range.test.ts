@@ -94,13 +94,13 @@ describe("normalizeDashboardMentionFiltersAfterParse", () => {
     ).toEqual({ mention_date_range_preset: "maximum" });
   });
 
-  it("maps both dates missing to maximum for custom", () => {
+  it("keeps custom preset when dates are not set yet (in-progress range pick)", () => {
     expect(
       normalizeDashboardMentionFiltersAfterParse(
         { mention_date_range_preset: "custom" },
         new Date()
       )
-    ).toEqual({ mention_date_range_preset: "maximum" });
+    ).toEqual({ mention_date_range_preset: "custom" });
   });
 });
 
@@ -110,6 +110,30 @@ describe("mentionFiltersShallowEqualForDashboard", () => {
       mentionFiltersShallowEqualForDashboard(
         { mention_date_range_preset: "maximum" },
         {}
+      )
+    ).toBe(true);
+  });
+
+  it("treats missing group_by as day for equality", () => {
+    expect(
+      mentionFiltersShallowEqualForDashboard({}, { group_by: undefined })
+    ).toBe(true);
+  });
+
+  it("distinguishes week from default day", () => {
+    expect(
+      mentionFiltersShallowEqualForDashboard(
+        { group_by: "week" },
+        { mention_date_range_preset: "maximum" }
+      )
+    ).toBe(false);
+  });
+
+  it("considers two week selections equal", () => {
+    expect(
+      mentionFiltersShallowEqualForDashboard(
+        { group_by: "week", model: "chatgpt" },
+        { group_by: "week", model: "chatgpt" }
       )
     ).toBe(true);
   });

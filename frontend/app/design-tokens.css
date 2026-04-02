@@ -1,5 +1,8 @@
-/* Brand axis: violet ~285 — startup-friendly, not enterprise gray. */
+/* Neutrals: violet-tinted ~285. Primary accent: Facebook blue #1877F2 — hue knob below. */
 :root {
+    /* OKLCH hue for semantic primary (links, CTAs, focus ring, chart-1, sidebar-primary). */
+    --brand-primary-hue: 264;
+
     --background: oklch(0.99 0.004 285);
     --foreground: oklch(0.18 0.022 285);
     --card: oklch(1 0.003 285);
@@ -7,8 +10,8 @@
     --popover: oklch(1 0.003 285);
     --popover-foreground: oklch(0.18 0.022 285);
 
-    --primary: oklch(0.48 0.19 285);
-    --primary-foreground: oklch(0.99 0.01 285);
+    --primary: oklch(0.567 0.208 var(--brand-primary-hue));
+    --primary-foreground: oklch(0.99 0.01 var(--brand-primary-hue));
 
     --secondary: oklch(0.94 0.022 285);
     --secondary-foreground: oklch(0.28 0.055 285);
@@ -33,9 +36,9 @@
 
     --border: oklch(0.89 0.022 285);
     --input: oklch(0.89 0.022 285);
-    --ring: oklch(0.56 0.17 285);
+    --ring: oklch(0.56 0.17 var(--brand-primary-hue));
 
-    --chart-1: oklch(0.52 0.2 285);
+    --chart-1: oklch(0.52 0.2 var(--brand-primary-hue));
     --chart-2: oklch(0.55 0.14 195);
     --chart-3: oklch(0.62 0.17 42);
     --chart-4: oklch(0.56 0.15 328);
@@ -45,12 +48,12 @@
 
     --sidebar: oklch(0.98 0.012 285);
     --sidebar-foreground: oklch(0.22 0.04 285);
-    --sidebar-primary: oklch(0.48 0.19 285);
-    --sidebar-primary-foreground: oklch(0.99 0.01 285);
+    --sidebar-primary: oklch(0.567 0.208 var(--brand-primary-hue));
+    --sidebar-primary-foreground: oklch(0.99 0.01 var(--brand-primary-hue));
     --sidebar-accent: oklch(0.94 0.028 285);
     --sidebar-accent-foreground: oklch(0.3 0.09 285);
     --sidebar-border: oklch(0.9 0.025 285);
-    --sidebar-ring: oklch(0.56 0.17 285);
+    --sidebar-ring: oklch(0.56 0.17 var(--brand-primary-hue));
 
     /* Surfaces: depth without enterprise flat gray */
     --surface-sunken: oklch(0.96 0.022 285);
@@ -137,8 +140,8 @@
     --popover: oklch(0.2 0.035 285);
     --popover-foreground: oklch(0.97 0.01 285);
 
-    --primary: oklch(0.72 0.16 285);
-    --primary-foreground: oklch(0.16 0.04 285);
+    --primary: oklch(0.72 0.16 var(--brand-primary-hue));
+    --primary-foreground: oklch(0.16 0.04 var(--brand-primary-hue));
 
     --secondary: oklch(0.28 0.04 285);
     --secondary-foreground: oklch(0.95 0.015 285);
@@ -163,9 +166,9 @@
 
     --border: oklch(0.95 0.02 285 / 12%);
     --input: oklch(0.95 0.02 285 / 16%);
-    --ring: oklch(0.62 0.14 285);
+    --ring: oklch(0.62 0.14 var(--brand-primary-hue));
 
-    --chart-1: oklch(0.72 0.17 285);
+    --chart-1: oklch(0.72 0.17 var(--brand-primary-hue));
     --chart-2: oklch(0.68 0.13 195);
     --chart-3: oklch(0.75 0.15 42);
     --chart-4: oklch(0.7 0.14 328);
@@ -173,12 +176,12 @@
 
     --sidebar: oklch(0.19 0.038 285);
     --sidebar-foreground: oklch(0.96 0.012 285);
-    --sidebar-primary: oklch(0.72 0.16 285);
-    --sidebar-primary-foreground: oklch(0.16 0.04 285);
+    --sidebar-primary: oklch(0.72 0.16 var(--brand-primary-hue));
+    --sidebar-primary-foreground: oklch(0.16 0.04 var(--brand-primary-hue));
     --sidebar-accent: oklch(0.28 0.05 285);
     --sidebar-accent-foreground: oklch(0.96 0.015 285);
     --sidebar-border: oklch(0.95 0.02 285 / 12%);
-    --sidebar-ring: oklch(0.62 0.14 285);
+    --sidebar-ring: oklch(0.62 0.14 var(--brand-primary-hue));
 
     --surface-sunken: oklch(0.14 0.03 285);
     --surface-raised: oklch(0.22 0.04 285);

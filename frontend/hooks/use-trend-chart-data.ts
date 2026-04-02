@@ -2,7 +2,6 @@ import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import type { MentionFilters, TrendPoint } from "@/models";
 import { brandMentionsApiService } from "@/services";
-import { TRENDS_DEFAULT_GROUP_BY } from "@/config";
 import { mentionFiltersForApiRequestBody } from "@/lib/helpers/mention-filter-api";
 
 export type TrendChartViewState =
@@ -35,7 +34,8 @@ function trendChartViewStateFromQuery(query: {
 }
 
 export function useTrendChartData(
-  filtersForApi: MentionFilters
+  filtersForApi: MentionFilters,
+  groupBy: "day" | "week"
 ): TrendChartDataResult {
   const requestFilters = useMemo(
     () => mentionFiltersForApiRequestBody(filtersForApi),
@@ -43,7 +43,7 @@ export function useTrendChartData(
   );
 
   const trendsQuery = brandMentionsApiService.useTrends({
-    group_by: TRENDS_DEFAULT_GROUP_BY,
+    group_by: groupBy,
     filters: requestFilters,
   });
 

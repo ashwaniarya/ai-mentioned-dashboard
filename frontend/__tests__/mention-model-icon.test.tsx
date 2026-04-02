@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
-import { MentionModelIcon } from "@/components/mention-model-icon"
+import { MentionModelIcon } from "@/components/mention-table/mention-model-icon"
 import {
   openAiOfficialBlossomSymbolSvgPath,
   openAiOfficialBlossomSymbolSvgViewBox,
