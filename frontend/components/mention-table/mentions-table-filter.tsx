@@ -105,58 +105,66 @@ export function MentionsTableFilter({ filters, onFiltersChange }: MentionsTableF
         </>
       )}
 
-      <div className="flex-1 min-w-[140px]">
-        <label className={dashboardMentionFilterFieldLabelClasses}>Model Version</label>
-        <Select
-          value={filters.model ?? FACET.ALL}
-          onValueChange={handleModelChange}
-          itemToStringLabel={(value) => labelForValue(mentionFilterChoices.model, value)}
-        >
-          <SelectTrigger className={cn("w-full transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {mentionFilterChoices.model.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <div
+        className={cn(
+          "flex w-full flex-col gap-4",
+          "min-[480px]:flex-row min-[480px]:flex-wrap min-[480px]:items-end min-[480px]:gap-3",
+          "sm:contents"
+        )}
+      >
+        <div className="w-full min-w-0 flex-1 sm:min-w-[140px]">
+          <label className={dashboardMentionFilterFieldLabelClasses}>Model Version</label>
+          <Select
+            value={filters.model ?? FACET.ALL}
+            onValueChange={handleModelChange}
+            itemToStringLabel={(value) => labelForValue(mentionFilterChoices.model, value)}
+          >
+            <SelectTrigger className={cn("w-full min-w-0 transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {mentionFilterChoices.model.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      <div className="flex-1 min-w-[140px]">
-        <label className={dashboardMentionFilterFieldLabelClasses}>Result Sentiment</label>
-        <Select
-          value={filters.sentiment ?? FACET.ALL}
-          onValueChange={handleSentimentChange}
-          itemToStringLabel={(value) => labelForValue(mentionFilterChoices.sentiment, value)}
-        >
-          <SelectTrigger className={cn("w-full transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {mentionFilterChoices.sentiment.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        <div className="w-full min-w-0 flex-1 sm:min-w-[140px]">
+          <label className={dashboardMentionFilterFieldLabelClasses}>Result Sentiment</label>
+          <Select
+            value={filters.sentiment ?? FACET.ALL}
+            onValueChange={handleSentimentChange}
+            itemToStringLabel={(value) => labelForValue(mentionFilterChoices.sentiment, value)}
+          >
+            <SelectTrigger className={cn("w-full min-w-0 transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {mentionFilterChoices.sentiment.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      <div className="flex-1 min-w-[140px]">
-        <label className={dashboardMentionFilterFieldLabelClasses}>Was Mentioned?</label>
-        <Select
-          value={filters.mentioned === true ? MENTIONED_VALUE.YES : filters.mentioned === false ? MENTIONED_VALUE.NO : FACET.ALL}
-          onValueChange={handleMentionedChange}
-          itemToStringLabel={(value) => labelForValue(mentionFilterChoices.mentioned, value)}
-        >
-          <SelectTrigger className={cn("w-full transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {mentionFilterChoices.mentioned.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="w-full min-w-0 flex-1 sm:min-w-[140px]">
+          <label className={dashboardMentionFilterFieldLabelClasses}>Was Mentioned?</label>
+          <Select
+            value={filters.mentioned === true ? MENTIONED_VALUE.YES : filters.mentioned === false ? MENTIONED_VALUE.NO : FACET.ALL}
+            onValueChange={handleMentionedChange}
+            itemToStringLabel={(value) => labelForValue(mentionFilterChoices.mentioned, value)}
+          >
+            <SelectTrigger className={cn("w-full min-w-0 transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {mentionFilterChoices.mentioned.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {dateRangeOrderInvalid && (
