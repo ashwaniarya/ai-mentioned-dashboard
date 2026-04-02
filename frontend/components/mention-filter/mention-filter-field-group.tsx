@@ -64,6 +64,9 @@ export function MentionFilterFieldGroup({
   onMentionedChange,
 }: MentionFilterFieldGroupProps) {
   const mobileTouchTargetClassName = "min-h-11 sm:min-h-8";
+  /** iOS WebKit shrinks type="date" unless height + appearance are explicit (select row stays tall). */
+  const mentionFilterDateInputClassName =
+    "h-11 min-h-11 py-2 leading-normal appearance-none sm:h-8 sm:min-h-8 sm:py-1";
 
   return (
     <>
@@ -98,7 +101,7 @@ export function MentionFilterFieldGroup({
           aria-invalid={dateRangeOrderInvalid}
           value={filters.date_from ?? ""}
           onChange={(event) => onDateFromInputChange(event.target.value)}
-          className={mobileTouchTargetClassName}
+          className={mentionFilterDateInputClassName}
         />
       </MentionFilterField>
 
@@ -108,7 +111,7 @@ export function MentionFilterFieldGroup({
           aria-invalid={dateRangeOrderInvalid}
           value={filters.date_to ?? ""}
           onChange={(event) => onDateToInputChange(event.target.value)}
-          className={mobileTouchTargetClassName}
+          className={mentionFilterDateInputClassName}
         />
       </MentionFilterField>
 
