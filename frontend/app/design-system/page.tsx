@@ -4,7 +4,9 @@ import { notFound } from "next/navigation"
 import { DesignSystemBackLink } from "@/app/design-system/design-system-back-link"
 import { DesignSystemSelectDemo } from "@/app/design-system/design-system-select-demo"
 import { DesignSystemThemeToggle } from "@/app/design-system/design-system-theme-toggle"
+import { MentionModelChip } from "@/components/mention-model-chip"
 import { Badge } from "@/components/ui/badge"
+import { Chip, type ChipTone } from "@/components/ui/chip"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -50,10 +52,25 @@ const navLinks = [
   { href: "#typography", label: "Typography" },
   { href: "#buttons", label: "Buttons" },
   { href: "#badges", label: "Badges" },
+  { href: "#chips", label: "Chips" },
   { href: "#cards", label: "Cards" },
   { href: "#select", label: "Select" },
   { href: "#table", label: "Table" },
 ] as const
+
+const chipToneGallery: ChipTone[] = [
+  "neutral",
+  "primary",
+  "success",
+  "warning",
+  "info",
+  "destructive",
+  "chart1",
+  "chart2",
+  "chart3",
+  "chart4",
+  "chart5",
+]
 
 const colorTokens = [
   { name: "--background", utility: "bg-background", fg: "text-foreground" },
@@ -115,6 +132,29 @@ const chartColorTokens = [
   { name: "--chart-3", utility: "bg-chart-3" },
   { name: "--chart-4", utility: "bg-chart-4" },
   { name: "--chart-5", utility: "bg-chart-5" },
+] as const
+
+const modelMentionColorTokens = [
+  {
+    name: "chatgpt",
+    bgUtility: "bg-model-chatgpt-bg",
+    fgUtility: "text-model-chatgpt-fg",
+  },
+  {
+    name: "gemini",
+    bgUtility: "bg-model-gemini-bg",
+    fgUtility: "text-model-gemini-fg",
+  },
+  {
+    name: "perplexity",
+    bgUtility: "bg-model-perplexity-bg",
+    fgUtility: "text-model-perplexity-fg",
+  },
+  {
+    name: "claude",
+    bgUtility: "bg-model-claude-bg",
+    fgUtility: "text-model-claude-fg",
+  },
 ] as const
 
 const elevationRows = [
@@ -269,6 +309,31 @@ export default function DesignSystemPage() {
                 />
                 <DashboardCaptionText className="font-mono">
                   {name}
+                </DashboardCaptionText>
+              </div>
+            ))}
+          </div>
+
+          <DashboardSubsectionHeading>
+            Mention model surfaces
+          </DashboardSubsectionHeading>
+          <DashboardSupportingText>
+            Table chips and model filter: background wash + icon ink. Marks are
+            third-party trademarks.
+          </DashboardSupportingText>
+          <div className="grid gap-dashboard-md sm:grid-cols-2 lg:grid-cols-4">
+            {modelMentionColorTokens.map(({ name, bgUtility, fgUtility }) => (
+              <div
+                key={name}
+                className="flex flex-col gap-dashboard-sm rounded-xl border border-border p-dashboard-md shadow-dashboard-subtle"
+              >
+                <div
+                  className={`flex h-14 w-full items-center justify-center rounded-lg ${bgUtility} ${fgUtility} text-dashboard-caption font-semibold`}
+                >
+                  Aa
+                </div>
+                <DashboardCaptionText className="font-mono">
+                  --model-{name}-bg / -fg
                 </DashboardCaptionText>
               </div>
             ))}
@@ -546,6 +611,71 @@ export default function DesignSystemPage() {
           </pre>
         </section>
 
+        <section id="chips" className="scroll-mt-28 space-y-dashboard-lg">
+          <DashboardSectionHeading>Chips</DashboardSectionHeading>
+          <DashboardSupportingText>
+            Dense, categorical labels for tables and filters. Subtle chips use a
+            neutral hairline border and put weight on{" "}
+            <DashboardInlineCode>text-foreground</DashboardInlineCode> (or muted for
+            neutral tone), not on hue-matched borders. Prefer{" "}
+            <DashboardInlineCode>Chip</DashboardInlineCode> for scan-heavy grids;
+            use <DashboardInlineCode>Badge</DashboardInlineCode> for pill-shaped
+            emphasis and marketing-style tags.
+          </DashboardSupportingText>
+          <div className="space-y-dashboard-md">
+            <div className="space-y-dashboard-sm">
+              <DashboardSubsectionHeading>Subtle</DashboardSubsectionHeading>
+              <div className="flex flex-wrap gap-dashboard-sm">
+                {chipToneGallery.map((tone) => (
+                  <Chip key={`subtle-${tone}`} variant="subtle" tone={tone}>
+                    {tone}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-dashboard-sm">
+              <DashboardSubsectionHeading>Outline</DashboardSubsectionHeading>
+              <div className="flex flex-wrap gap-dashboard-sm">
+                {chipToneGallery.map((tone) => (
+                  <Chip key={`outline-${tone}`} variant="outline" tone={tone}>
+                    {tone}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-dashboard-sm">
+              <DashboardSubsectionHeading>Solid</DashboardSubsectionHeading>
+              <div className="flex flex-wrap gap-dashboard-sm">
+                {chipToneGallery.map((tone) => (
+                  <Chip key={`solid-${tone}`} variant="solid" tone={tone}>
+                    {tone}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-dashboard-sm">
+              <DashboardSubsectionHeading>
+                Mention model chips
+              </DashboardSubsectionHeading>
+              <DashboardSupportingText>
+                Same component as the mentions table model column; hues align
+                with chart series tokens.
+              </DashboardSupportingText>
+              <div className="flex flex-wrap gap-dashboard-sm">
+                <MentionModelChip model="chatgpt" />
+                <MentionModelChip model="gemini" />
+                <MentionModelChip model="perplexity" />
+                <MentionModelChip model="claude" />
+                <MentionModelChip model="unknown_vendor" />
+              </div>
+            </div>
+          </div>
+          <pre className="overflow-x-auto rounded-lg bg-muted p-dashboard-md font-mono text-dashboard-caption text-muted-foreground">
+            {`<Chip variant="subtle" tone="info">Beta</Chip>
+<MentionModelChip model="chatgpt" />`}
+          </pre>
+        </section>
+
         <section id="cards" className="scroll-mt-28 space-y-dashboard-lg">
           <DashboardSectionHeading>Cards</DashboardSectionHeading>
           <div className="grid gap-dashboard-lg md:grid-cols-2">
@@ -613,14 +743,18 @@ export default function DesignSystemPage() {
                 <TableCell className="font-medium">News</TableCell>
                 <TableCell>“Brand launches summer drop…”</TableCell>
                 <TableCell className="text-right">
-                  <Badge variant="success">Positive</Badge>
+                  <Chip variant="subtle" tone="success">
+                    Positive
+                  </Chip>
                 </TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">Social</TableCell>
                 <TableCell>Thread about pricing…</TableCell>
                 <TableCell className="text-right">
-                  <Badge variant="info">Neutral</Badge>
+                  <Chip variant="subtle" tone="info">
+                    Neutral
+                  </Chip>
                 </TableCell>
               </TableRow>
             </TableBody>

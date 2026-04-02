@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 
+import { Layers } from "lucide-react";
+
 import {
   FACET,
   MENTIONED_VALUE,
@@ -16,7 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MentionModelIcon } from "@/components/mention-model-icon";
 import { labelForValue } from "@/lib/helpers/mention-filter-label-helpers";
+import {
+  mentionModelBrandFromApiValue,
+  mentionModelIconTintClassByBrand,
+} from "@/lib/mention-model-brand";
 import { cn } from "@/lib/utils";
 import type { MentionFilters } from "@/models";
 
@@ -38,6 +45,23 @@ interface MentionFilterFieldGroupProps {
     value: MentionFilters["sentiment"] | undefined
   ) => void;
   onMentionedChange: (value: MentionFilters["mentioned"] | undefined) => void;
+}
+
+function MentionFilterModelLeadingGlyph({
+  optionValue,
+}: {
+  optionValue: string;
+}) {
+  if (optionValue === FACET.ALL) {
+    return <Layers className="size-4 text-muted-foreground" aria-hidden />;
+  }
+  const brand = mentionModelBrandFromApiValue(optionValue);
+  return (
+    <MentionModelIcon
+      brand={brand}
+      className={cn("size-4", mentionModelIconTintClassByBrand[brand])}
+    />
+  );
 }
 
 function MentionFilterField({
@@ -133,11 +157,25 @@ export function MentionFilterFieldGroup({
           <SelectTrigger
             className={`w-full min-w-0 ${mobileTouchTargetClassName}`}
           >
-            <SelectValue />
+            <SelectValue>
+              {(value) => {
+                const key =
+                  value === null || value === undefined
+                    ? FACET.ALL
+                    : String(value);
+                return (
+                  <>
+                    <MentionFilterModelLeadingGlyph optionValue={key} />
+                    {labelForValue(mentionFilterChoices.model, value)}
+                  </>
+                );
+              }}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {mentionFilterChoices.model.map((option) => (
               <SelectItem key={option.value} value={option.value}>
+                <MentionFilterModelLeadingGlyph optionValue={option.value} />
                 {option.label}
               </SelectItem>
             ))}

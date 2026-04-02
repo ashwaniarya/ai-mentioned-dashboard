@@ -113,6 +113,20 @@
     --dashboard-motion-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
 
     --dashboard-focus-ring-offset: 2px;
+
+    /* Mentions table — Yes: neutral tray; rim = same hue/chroma as --success (alpha wash — no color-mix into C=0, avoids yellow/orange skew) */
+    --mention-yes-chip-bg: oklch(1 0 0);
+    --mention-yes-chip-border: oklch(from var(--success) l c h / 55%);
+
+    /* Mention model chips: brand-tinted surfaces + icon ink (trademarks apply to marks) */
+    --model-chatgpt-bg: oklch(0.95 0.028 168);
+    --model-chatgpt-fg: oklch(0.48 0.12 168);
+    --model-gemini-bg: oklch(0.94 0.035 264);
+    --model-gemini-fg: oklch(0.52 0.18 264);
+    --model-perplexity-bg: oklch(0.95 0.04 210);
+    --model-perplexity-fg: oklch(0.52 0.11 210);
+    --model-claude-bg: oklch(0.95 0.03 55);
+    --model-claude-fg: oklch(0.55 0.13 55);
 }
 
 .dark {
@@ -221,4 +235,16 @@
     --dashboard-motion-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
 
     --dashboard-focus-ring-offset: 2px;
+
+    --mention-yes-chip-bg: oklch(0.14 0 0);
+    --mention-yes-chip-border: oklch(from var(--success) l c h / 62%);
+
+    --model-chatgpt-bg: oklch(0.26 0.045 168);
+    --model-chatgpt-fg: oklch(0.78 0.1 168);
+    --model-gemini-bg: oklch(0.28 0.06 264);
+    --model-gemini-fg: oklch(0.82 0.12 264);
+    --model-perplexity-bg: oklch(0.27 0.05 210);
+    --model-perplexity-fg: oklch(0.8 0.1 210);
+    --model-claude-bg: oklch(0.28 0.04 55);
+    --model-claude-fg: oklch(0.82 0.11 55);
 }

@@ -14,7 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Chip } from "@/components/ui/chip";
+import { MentionModelChip } from "@/components/mention-model-chip";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -36,21 +37,14 @@ import {
   DashboardSupportingText,
 } from "@/components/ui/typography";
 import { ChevronLeft, ChevronRight, ExternalLink, Loader2 } from "lucide-react";
-import {
-  mentionsTableMentionedNoBadgeClassName,
-  mentionsTableMentionedYesBadgeClassName,
-  mentionsTableModelNameBadgeClassName,
-  mentionsTableSentimentChipClassNameBySentiment,
-} from "@/constants/mentions-table.constants";
+import { chipToneForMentionSentimentValue } from "@/lib/helpers/mention-table-chip-tones";
 import type { Mention, MentionFilters } from "@/models";
 import {
   useMentionsTableData,
   type MentionsTableViewState,
 } from "@/hooks/use-mentions-table-data";
-import {
-  displayLabelForMentionModel,
-  displayLabelForMentionSentiment,
-} from "@/lib/helpers/mention-filter-label-helpers";
+import { displayLabelForMentionSentiment } from "@/lib/helpers/mention-filter-label-helpers";
+import { cn } from "@/lib/utils";
 
 // ── Column definitions (module-level, no per-render cost) ─────────────
 
@@ -79,26 +73,26 @@ const mentionColumns = [
   }),
   columnHelper.accessor("model", {
     header: "Model",
-    cell: (info) => (
-      <Badge variant="outline" className={mentionsTableModelNameBadgeClassName}>
-        {displayLabelForMentionModel(info.getValue())}
-      </Badge>
-    ),
+    cell: (info) => <MentionModelChip model={info.getValue()} />,
   }),
   columnHelper.accessor("mentioned", {
     header: "Mentioned",
-    cell: (info) => (
-      <Badge
-        variant="outline"
-        className={
-          info.getValue()
-            ? mentionsTableMentionedYesBadgeClassName
-            : mentionsTableMentionedNoBadgeClassName
-        }
-      >
-        {info.getValue() ? "Yes" : "No"}
-      </Badge>
-    ),
+    cell: (info) => {
+      const mentioned = info.getValue();
+      return (
+        <Chip
+          variant={mentioned ? "subtle" : "outline"}
+          tone={mentioned ? "success" : "neutral"}
+          className={
+            mentioned
+              ? "!border-mention-yes-chip-border !bg-mention-yes-chip-bg !text-success"
+              : undefined
+          }
+        >
+          {mentioned ? "Yes" : "No"}
+        </Chip>
+      );
+    },
   }),
   columnHelper.accessor("position", {
     header: "Position",
@@ -118,13 +112,11 @@ const mentionColumns = [
     cell: (info) => {
       const val = info.getValue();
       if (!val) return "—";
+      const tone = chipToneForMentionSentimentValue(val);
       return (
-        <Badge
-          variant="outline"
-          className={`border-transparent ${mentionsTableSentimentChipClassNameBySentiment[val] ?? "bg-muted text-muted-foreground"}`}
-        >
+        <Chip variant="subtle" tone={tone}>
           {displayLabelForMentionSentiment(val)}
-        </Badge>
+        </Chip>
       );
     },
   }),
@@ -329,7 +321,10 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
           {headerGroup.headers.map((header) => (
             <TableHead
               key={header.id}
-              className={RESPONSIVE_COLUMN_CLASS_BY_ID[header.column.id]}
+              className={cn(
+                RESPONSIVE_COLUMN_CLASS_BY_ID[header.column.id],
+                "text-muted-foreground"
+              )}
             >
               {flexRender(
                 header.column.columnDef.header,
@@ -343,7 +338,7 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
   );
 
   return (
-    <Card className="overflow-hidden border-border/80 shadow-sm">
+    <Card className="overflow-hidden border-border/80 shadow-dashboard-subtle">
       <CardHeader>
         <CardTitle>Brand Mentions</CardTitle>
         <CardDescription>

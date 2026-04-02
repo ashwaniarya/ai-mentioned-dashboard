@@ -116,6 +116,7 @@ describe("displayLabelForMentionModel", () => {
   it("maps known API model values", () => {
     expect(displayLabelForMentionModel("claude")).toBe("Claude");
     expect(displayLabelForMentionModel("chatgpt")).toBe("ChatGPT");
+    expect(displayLabelForMentionModel("CLAUDE")).toBe("Claude");
   });
 
   it("humanizes unknown model values", () => {

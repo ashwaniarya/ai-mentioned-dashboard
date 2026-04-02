@@ -25,7 +25,8 @@ export function labelForValue(
 
 export function displayLabelForMentionModel(model: string): string {
   if (!model) return model;
-  return labelForValue(mentionFilterChoices.model, model);
+  const normalizedKey = model.trim().toLowerCase();
+  return labelForValue(mentionFilterChoices.model, normalizedKey);
 }
 
 export function displayLabelForMentionSentiment(sentiment: string): string {
