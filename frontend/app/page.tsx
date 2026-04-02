@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 function DashboardFiltersSkeleton() {
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-3 sm:px-6 sm:pb-4 lg:px-8">
+    <div className="mx-auto max-w-7xl px-dashboard-md pb-dashboard-md sm:px-dashboard-lg sm:pb-dashboard-lg lg:px-dashboard-xl">
       <Skeleton className="h-14 w-full rounded-xl sm:h-24 sm:rounded-lg" />
     </div>
   );
@@ -20,7 +20,7 @@ export default function DashboardPage() {
             <DashboardHeader />
             <DashboardFiltersSkeleton />
           </div>
-          <main className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+          <main className="mx-auto max-w-7xl space-y-dashboard-xl p-dashboard-md sm:p-dashboard-lg lg:p-dashboard-xl">
             <Skeleton className="h-72 w-full rounded-lg" />
             <Skeleton className="h-96 w-full rounded-lg" />
           </main>

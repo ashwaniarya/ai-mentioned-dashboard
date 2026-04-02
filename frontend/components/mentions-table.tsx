@@ -24,7 +24,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  DashboardBodyText,
+  DashboardSupportingText,
+} from "@/components/ui/typography";
 import { ChevronLeft, ChevronRight, ExternalLink, Loader2 } from "lucide-react";
 import {
   mentionsTableMentionedNoBadgeClassName,
@@ -128,7 +138,7 @@ const mentionColumns = [
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 font-medium text-sky-700 underline-offset-2 hover:text-sky-800 hover:underline dark:text-sky-400 dark:hover:text-sky-300"
+          className="inline-flex items-center gap-1 font-medium text-info underline-offset-2 hover:text-info/80 hover:underline"
         >
           <ExternalLink className="size-4" />
           Link
@@ -231,13 +241,15 @@ function MentionsTablePagination({
 }) {
   return (
     <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm text-muted-foreground">
+      <DashboardSupportingText>
         {totalResults.toLocaleString()} total results
-      </p>
+      </DashboardSupportingText>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2">
         <div className="flex items-center justify-between gap-3 sm:justify-start sm:gap-1.5">
-          <span className="text-sm text-muted-foreground">Rows</span>
+          <DashboardSupportingText className="m-0 shrink-0">
+            Rows
+          </DashboardSupportingText>
           <Select
             value={String(perPage)}
             onValueChange={(val) => onPerPageChange(Number(val))}
@@ -255,9 +267,9 @@ function MentionsTablePagination({
         </div>
 
         <div className="flex items-center justify-between gap-3 sm:justify-start">
-          <span className="text-sm text-muted-foreground">
+          <DashboardSupportingText className="m-0 shrink-0">
             Page {page} of {totalPages}
-          </span>
+          </DashboardSupportingText>
           <div className="flex gap-2 sm:gap-1">
             <Button
               variant="outline"
@@ -334,6 +346,12 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
     <Card className="overflow-hidden border-border/80 shadow-sm">
       <CardHeader>
         <CardTitle>Brand Mentions</CardTitle>
+        <CardDescription>
+          <DashboardSupportingText>
+            Paginated results for your current filters; open citations in a new
+            tab.
+          </DashboardSupportingText>
+        </CardDescription>
       </CardHeader>
       {renderBody(viewState)}
     </Card>
@@ -353,21 +371,21 @@ export function MentionsTable({ filtersForApi }: MentionsTableProps) {
       case "empty":
         return (
           <CardContent className="flex flex-col items-center justify-center bg-muted/20 py-14">
-            <p className="text-sm text-muted-foreground">
+            <DashboardSupportingText>
               No mentions match your filters.
-            </p>
+            </DashboardSupportingText>
           </CardContent>
         );
 
       case "error":
         return (
           <CardContent className="flex flex-col items-center justify-center bg-muted/20 py-14">
-            <p className="text-sm font-medium text-foreground">
+            <DashboardBodyText className="font-medium">
               Unable to load brand mentions.
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            </DashboardBodyText>
+            <DashboardSupportingText className="mt-1 block">
               Please try again in a moment.
-            </p>
+            </DashboardSupportingText>
           </CardContent>
         );
 

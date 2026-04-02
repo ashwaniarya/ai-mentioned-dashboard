@@ -18,7 +18,15 @@ import {
 import type { MentionDateRangePreset, MentionRollingDateRangePreset } from "@/config";
 import { ChevronDown, RotateCcw, SlidersHorizontal } from "lucide-react";
 
-import { MentionFilterFieldGroup } from "@/components/mention-filter/mention-filter-field-group";
+import {
+  MentionFilterFieldGroup,
+  mentionFilterFieldLabelClassName,
+} from "@/components/mention-filter/mention-filter-field-group";
+import {
+  DashboardBodyText,
+  DashboardCaptionText,
+  DashboardSupportingText,
+} from "@/components/ui/typography";
 
 export interface MentionFilterControlProps {
   filters: MentionFilters;
@@ -128,15 +136,15 @@ export function MentionFilterControl({
           <span className="flex min-w-0 items-start gap-2.5">
             <SlidersHorizontal className="mt-0.5 size-4 text-muted-foreground" />
             <span className="min-w-0">
-              <span className="block text-sm font-medium text-foreground">
+              <DashboardBodyText className="block font-medium">
                 Filters
-              </span>
-              <span className="block text-xs text-muted-foreground">
+              </DashboardBodyText>
+              <DashboardCaptionText className="block">
                 {filterSummary.mobileActiveFilterText}
-              </span>
-              <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+              </DashboardCaptionText>
+              <DashboardSupportingText className="mt-0.5 block truncate">
                 {filterSummary.mobileSummaryText}
-              </span>
+              </DashboardSupportingText>
             </span>
           </span>
           <ChevronDown
@@ -171,9 +179,9 @@ export function MentionFilterControl({
             </div>
 
             {dateRangeOrderInvalid ? (
-              <p className="text-sm text-destructive" role="alert">
+              <DashboardBodyText className="text-destructive" role="alert">
                 {MENTION_FILTER_INVALID_DATE_RANGE_MESSAGE}
-              </p>
+              </DashboardBodyText>
             ) : null}
 
             <Button
@@ -208,7 +216,7 @@ export function MentionFilterControl({
         <div className="min-w-0 space-y-2 ">
           <div
             aria-hidden="true"
-            className="text-xs font-medium text-muted-foreground opacity-0"
+            className={cn(mentionFilterFieldLabelClassName, "opacity-0")}
           >
             Reset
           </div>
@@ -226,12 +234,12 @@ export function MentionFilterControl({
       </div>
 
       {dateRangeOrderInvalid ? (
-        <p
-          className="mt-2 hidden text-sm text-destructive sm:block"
+        <DashboardBodyText
+          className="mt-2 hidden text-destructive sm:block"
           role="alert"
         >
           {MENTION_FILTER_INVALID_DATE_RANGE_MESSAGE}
-        </p>
+        </DashboardBodyText>
       ) : null}
     </div>
   );

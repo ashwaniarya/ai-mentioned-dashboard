@@ -17,7 +17,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { labelForValue } from "@/lib/helpers/mention-filter-label-helpers";
+import { cn } from "@/lib/utils";
 import type { MentionFilters } from "@/models";
+
+export const mentionFilterFieldLabelClassName = cn(
+  "block font-medium text-[length:var(--dashboard-type-caption-size)] leading-[var(--dashboard-type-caption-line-height)] text-muted-foreground"
+);
 
 interface MentionFilterFieldGroupProps {
   filters: MentionFilters;
@@ -44,9 +49,7 @@ function MentionFilterField({
 }) {
   return (
     <div className="min-w-0 space-y-1">
-      <label className="text-xs font-medium text-muted-foreground">
-        {label}
-      </label>
+      <label className={mentionFilterFieldLabelClassName}>{label}</label>
       {children}
     </div>
   );

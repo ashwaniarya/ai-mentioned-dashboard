@@ -1,15 +1,20 @@
+import {
+  DashboardDisplayHeading,
+  DashboardSupportingText,
+} from "@/components/ui/typography";
+
 export function DashboardHeader() {
   return (
     <header>
-      <div className="mx-auto flex max-w-7xl items-start justify-between px-4 py-3 sm:items-center sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl items-start justify-between px-dashboard-md py-dashboard-md sm:items-center sm:px-dashboard-lg lg:px-dashboard-xl">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+          <DashboardDisplayHeading>
             <span className="sm:hidden">Brand Mentions</span>
             <span className="hidden sm:inline">Brand Mentions Dashboard</span>
-          </h1>
-          <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground sm:text-sm">
+          </DashboardDisplayHeading>
+          <DashboardSupportingText className="mt-1 max-w-2xl">
             Track how your brand is mentioned across AI models
-          </p>
+          </DashboardSupportingText>
         </div>
       </div>
     </header>

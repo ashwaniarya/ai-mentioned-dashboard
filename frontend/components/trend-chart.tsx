@@ -12,9 +12,14 @@ import {
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  DashboardBodyText,
+  DashboardSupportingText,
+} from "@/components/ui/typography";
 import { LoadingFade } from "@/components/ui/loading-fade";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MentionFilters, TrendPoint } from "@/models";
@@ -58,21 +63,24 @@ function TrendChartLegend({
     ? MOBILE_TOTAL_SERIES_LABEL
     : TOTAL_SERIES_LABEL;
 
+  const legendLabelClassName =
+    "text-[length:var(--dashboard-type-caption-size)] leading-[var(--dashboard-type-caption-line-height)] text-muted-foreground sm:text-[length:var(--dashboard-type-supporting-size)] sm:leading-[var(--dashboard-type-supporting-line-height)]";
+
   return (
-    <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground sm:text-sm">
+    <div className="mt-dashboard-md flex flex-wrap items-center justify-center gap-x-dashboard-lg gap-y-dashboard-sm">
       <span className="inline-flex items-center gap-2">
         <span
           aria-hidden="true"
-          className="size-2.5 rounded-full bg-[var(--color-chart-2)]"
+          className="size-2.5 shrink-0 rounded-full bg-[var(--color-chart-2)]"
         />
-        <span>{totalSeriesLabel}</span>
+        <span className={legendLabelClassName}>{totalSeriesLabel}</span>
       </span>
       <span className="inline-flex items-center gap-2">
         <span
           aria-hidden="true"
-          className="size-2.5 rounded-full bg-[var(--color-chart-1)]"
+          className="size-2.5 shrink-0 rounded-full bg-[var(--color-chart-1)]"
         />
-        <span>{MENTIONED_SERIES_LABEL}</span>
+        <span className={legendLabelClassName}>{MENTIONED_SERIES_LABEL}</span>
       </span>
     </div>
   );
@@ -210,9 +218,9 @@ function TrendChartPresentation({
             className="flex flex-col items-center justify-center rounded-lg bg-muted/20 py-14"
             style={{ height: TREND_CHART_HEIGHT_PX }}
           >
-            <p className="text-sm text-muted-foreground">
+            <DashboardSupportingText>
               No trend data available
-            </p>
+            </DashboardSupportingText>
           </div>
         );
       case "error":
@@ -221,12 +229,12 @@ function TrendChartPresentation({
             className="flex flex-col items-center justify-center rounded-lg bg-muted/20 py-14"
             style={{ height: TREND_CHART_HEIGHT_PX }}
           >
-            <p className="text-sm font-medium text-foreground">
+            <DashboardBodyText className="font-medium">
               Unable to load mention trends.
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            </DashboardBodyText>
+            <DashboardSupportingText className="mt-1 block">
               Please try again in a moment.
-            </p>
+            </DashboardSupportingText>
           </div>
         );
       case "loading":
@@ -254,6 +262,12 @@ function TrendChartPresentation({
     <Card className="overflow-hidden border-border/80 shadow-sm">
       <CardHeader>
         <CardTitle>Mention Trends</CardTitle>
+        <CardDescription>
+          <DashboardSupportingText>
+            Total queries compared to rows where your brand was mentioned over
+            the selected range.
+          </DashboardSupportingText>
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <LoadingFade

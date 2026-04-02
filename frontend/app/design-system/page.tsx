@@ -49,6 +49,7 @@ const navLinks = [
   { href: "#foundations", label: "Foundations" },
   { href: "#typography", label: "Typography" },
   { href: "#buttons", label: "Buttons" },
+  { href: "#badges", label: "Badges" },
   { href: "#cards", label: "Cards" },
   { href: "#select", label: "Select" },
   { href: "#table", label: "Table" },
@@ -69,9 +70,51 @@ const colorTokens = [
   {
     name: "--destructive",
     utility: "bg-destructive",
-    fg: "text-primary-foreground",
+    fg: "text-destructive-foreground",
   },
+  {
+    name: "--success",
+    utility: "bg-success",
+    fg: "text-success-foreground",
+  },
+  {
+    name: "--warning",
+    utility: "bg-warning",
+    fg: "text-warning-foreground",
+  },
+  { name: "--info", utility: "bg-info", fg: "text-info-foreground" },
   { name: "--border", utility: "bg-border", fg: "text-foreground" },
+] as const
+
+const surfaceNeutralTokens = [
+  {
+    name: "--surface-sunken",
+    utility: "bg-surface-sunken",
+    fg: "text-foreground",
+  },
+  {
+    name: "--surface-raised",
+    utility: "bg-surface-raised",
+    fg: "text-foreground",
+  },
+  {
+    name: "--border-strong",
+    utility: "bg-border-strong",
+    fg: "text-foreground",
+  },
+  { name: "--neutral-1", utility: "bg-neutral-1", fg: "text-foreground" },
+  { name: "--neutral-2", utility: "bg-neutral-2", fg: "text-foreground" },
+  { name: "--neutral-3", utility: "bg-neutral-3", fg: "text-neutral-1" },
+  { name: "--neutral-4", utility: "bg-neutral-4", fg: "text-neutral-1" },
+  { name: "--neutral-5", utility: "bg-neutral-5", fg: "text-neutral-1" },
+] as const
+
+const chartColorTokens = [
+  { name: "--chart-1", utility: "bg-chart-1" },
+  { name: "--chart-2", utility: "bg-chart-2" },
+  { name: "--chart-3", utility: "bg-chart-3" },
+  { name: "--chart-4", utility: "bg-chart-4" },
+  { name: "--chart-5", utility: "bg-chart-5" },
 ] as const
 
 const elevationRows = [
@@ -167,6 +210,10 @@ export default function DesignSystemPage() {
           </DashboardBodyText>
 
           <DashboardSubsectionHeading>Semantic colors</DashboardSubsectionHeading>
+          <DashboardSupportingText>
+            Violet-forward brand (~285° hue) with startup-friendly chroma; status
+            pairs for product UI.
+          </DashboardSupportingText>
           <div className="grid gap-dashboard-md sm:grid-cols-2 lg:grid-cols-3">
             {colorTokens.map(({ name, utility, fg }) => (
               <div
@@ -178,6 +225,48 @@ export default function DesignSystemPage() {
                 >
                   Swatch
                 </div>
+                <DashboardCaptionText className="font-mono">
+                  {name}
+                </DashboardCaptionText>
+              </div>
+            ))}
+          </div>
+
+          <DashboardSubsectionHeading>
+            Surfaces and neutral ramp
+          </DashboardSubsectionHeading>
+          <DashboardSupportingText>
+            Extra tokens for depth and brand-tinted grays; use alongside core
+            semantic names.
+          </DashboardSupportingText>
+          <div className="grid gap-dashboard-md sm:grid-cols-2 lg:grid-cols-4">
+            {surfaceNeutralTokens.map(({ name, utility, fg }) => (
+              <div
+                key={name}
+                className="flex flex-col gap-dashboard-sm rounded-xl border border-border p-dashboard-md shadow-dashboard-subtle"
+              >
+                <div
+                  className={`flex h-14 w-full items-center justify-center rounded-lg ${utility} ${fg} text-dashboard-caption font-medium`}
+                >
+                  Swatch
+                </div>
+                <DashboardCaptionText className="font-mono">
+                  {name}
+                </DashboardCaptionText>
+              </div>
+            ))}
+          </div>
+
+          <DashboardSubsectionHeading>Chart series</DashboardSubsectionHeading>
+          <div className="flex flex-wrap gap-dashboard-md">
+            {chartColorTokens.map(({ name, utility }) => (
+              <div
+                key={name}
+                className="flex flex-col items-center gap-dashboard-sm"
+              >
+                <div
+                  className={`size-14 rounded-xl border border-border shadow-dashboard-subtle ${utility}`}
+                />
                 <DashboardCaptionText className="font-mono">
                   {name}
                 </DashboardCaptionText>
@@ -435,6 +524,28 @@ export default function DesignSystemPage() {
           </pre>
         </section>
 
+        <section id="badges" className="scroll-mt-28 space-y-dashboard-lg">
+          <DashboardSectionHeading>Badges</DashboardSectionHeading>
+          <DashboardSupportingText>
+            Semantic status variants map to{" "}
+            <DashboardInlineCode>success</DashboardInlineCode>,{" "}
+            <DashboardInlineCode>warning</DashboardInlineCode>,{" "}
+            <DashboardInlineCode>info</DashboardInlineCode> tokens.
+          </DashboardSupportingText>
+          <div className="flex flex-wrap gap-dashboard-md">
+            <Badge variant="default">Default</Badge>
+            <Badge variant="secondary">Secondary</Badge>
+            <Badge variant="outline">Outline</Badge>
+            <Badge variant="destructive">Destructive</Badge>
+            <Badge variant="success">Success</Badge>
+            <Badge variant="warning">Warning</Badge>
+            <Badge variant="info">Info</Badge>
+          </div>
+          <pre className="overflow-x-auto rounded-lg bg-muted p-dashboard-md font-mono text-dashboard-caption text-muted-foreground">
+            {`<Badge variant="success">Live</Badge>`}
+          </pre>
+        </section>
+
         <section id="cards" className="scroll-mt-28 space-y-dashboard-lg">
           <DashboardSectionHeading>Cards</DashboardSectionHeading>
           <div className="grid gap-dashboard-lg md:grid-cols-2">
@@ -502,14 +613,14 @@ export default function DesignSystemPage() {
                 <TableCell className="font-medium">News</TableCell>
                 <TableCell>“Brand launches summer drop…”</TableCell>
                 <TableCell className="text-right">
-                  <Badge>Positive</Badge>
+                  <Badge variant="success">Positive</Badge>
                 </TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium">Social</TableCell>
                 <TableCell>Thread about pricing…</TableCell>
                 <TableCell className="text-right">
-                  <Badge variant="secondary">Neutral</Badge>
+                  <Badge variant="info">Neutral</Badge>
                 </TableCell>
               </TableRow>
             </TableBody>

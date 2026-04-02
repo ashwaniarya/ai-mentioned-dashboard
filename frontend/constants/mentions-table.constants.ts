@@ -1,18 +1,19 @@
-/** Filled sentiment chips: readable contrast, subtle border so they don't look like flat stickers. */
-export const mentionsTableSentimentChipClassNameBySentiment: Record<string, string> = {
-  positive:
-    "border border-emerald-500/30 bg-emerald-500/[0.12] text-emerald-900 dark:border-emerald-400/35 dark:bg-emerald-500/15 dark:text-emerald-200",
-  neutral:
-    "border border-sky-500/30 bg-sky-500/[0.12] text-sky-950 dark:border-sky-400/30 dark:bg-sky-500/15 dark:text-sky-100",
-  negative:
-    "border border-rose-500/35 bg-rose-500/[0.12] text-rose-900 dark:border-rose-400/35 dark:bg-rose-500/15 dark:text-rose-200",
-};
+/** Filled chips: semantic tokens only (startup palette — no raw Tailwind palette classes). */
+export const mentionsTableSentimentChipClassNameBySentiment: Record<string, string> =
+  {
+    positive:
+      "border-success/35 bg-success/15 text-success dark:border-success/40 dark:bg-success/20 dark:text-success",
+    neutral:
+      "border-info/30 bg-info/12 text-info dark:border-info/35 dark:bg-info/18 dark:text-info",
+    negative:
+      "border-destructive/35 bg-destructive/12 text-destructive dark:border-destructive/40 dark:bg-destructive/20 dark:text-destructive",
+  };
 
 export const mentionsTableModelNameBadgeClassName =
-  "border border-violet-500/25 bg-violet-500/[0.1] text-violet-950 dark:border-violet-400/30 dark:bg-violet-500/12 dark:text-violet-100";
+  "border-primary/30 bg-primary/10 text-primary dark:border-primary/35 dark:bg-primary/15 dark:text-primary";
 
 export const mentionsTableMentionedYesBadgeClassName =
-  "border-emerald-500/40 bg-emerald-500/[0.1] text-emerald-900 dark:border-emerald-500/45 dark:bg-emerald-500/15 dark:text-emerald-200";
+  "border-success/40 bg-success/12 text-success dark:border-success/45 dark:bg-success/18 dark:text-success";
 
 export const mentionsTableMentionedNoBadgeClassName =
   "border-border/80 bg-muted/70 text-muted-foreground dark:bg-muted/50";
