@@ -1,7 +1,7 @@
 import { Chip } from "@/components/ui/chip"
 import { MentionModelIcon } from "@/components/mention-table/mention-model-icon"
 import { cn } from "@/lib/utils"
-import { displayLabelForMentionModel } from "@/lib/helpers/mention-filter-label-helpers"
+import { displayLabelForMentionModel } from "@/components/mention-table/mention-table-display-labels";
 import {
   mentionModelBrandFromApiValue,
   mentionModelIconTintClassByBrand,

@@ -1,24 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import type { MentionFilters } from "@/models";
-import { isMentionDateRangeOrderInvalid } from "@/lib/helpers/mention-filter-api";
-import {
-  getDashboardBaselineMentionFilters,
-  getMentionDateRangeForMentionDateRangeRollingPreset,
-  mentionFiltersShallowEqualForDashboard,
-  normalizeDashboardMentionFiltersAfterParse,
-} from "@/lib/helpers/mention-filter-default-date-range";
 import {
   DATE_PRESET,
   MENTION_FILTER_INVALID_DATE_RANGE_MESSAGE,
-  MENTION_ROLLING_PRESET_DAY_COUNTS,
   mentionFilterChoices,
   FACET,
 } from "@/config";
-import type { MentionDateRangePreset, MentionRollingDateRangePreset } from "@/config";
-import { labelForValue } from "@/lib/helpers/mention-filter-label-helpers";
+import type { MentionDateRangePreset } from "@/config";
+import { labelForValue } from "@/lib/helpers/choice-display-label";
+import { mentionFiltersShallowEqualForDashboard } from "@/lib/helpers/mention-filters";
 
 import {
   Select,
@@ -30,6 +22,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { DashboardBodyText } from "@/components/ui/typography";
 import { MentionFiltersResetIconButton } from "@/components/mention-filters/mention-filters-reset-icon-button";
+import {
+  dashboardMentionFilterFieldLabelClasses,
+  dashboardMentionFilterInputContainerClasses,
+  useDashboardMentionFilterSharedHandlers,
+} from "@/components/mention-filters/use-dashboard-mention-filter-shared-handlers";
+
+const trendChartFilterGroupByFieldLabelElementId = "trend-chart-filter-group-by-field-label";
 
 export interface TrendChartFilterProps {
   filters: MentionFilters;
@@ -37,85 +36,26 @@ export interface TrendChartFilterProps {
 }
 
 export function TrendChartFilter({ filters, onFiltersChange }: TrendChartFilterProps) {
-  const normalizedDashboardBaselineMentionFilters = useMemo(
-    () =>
-      normalizeDashboardMentionFiltersAfterParse(
-        getDashboardBaselineMentionFilters(),
-        new Date()
-      ),
-    []
-  );
+  const {
+    normalizedDashboardBaselineMentionFilters,
+    dateRangeOrderInvalid,
+    mentionDateRangePresetSelectValue,
+    handleDatePresetChange,
+    handleDateFromChange,
+    handleDateToChange,
+    handleModelChange,
+    handleSentimentChange,
+    handleResetDashboardMentionFilters,
+  } = useDashboardMentionFilterSharedHandlers({ filters, onFiltersChange });
 
-  const dateRangeOrderInvalid = isMentionDateRangeOrderInvalid(filters);
-  const mentionDateRangePresetSelectValue =
-    (filters.mention_date_range_preset ?? DATE_PRESET.MAXIMUM) as MentionDateRangePreset;
-
-  const handleDatePresetChange = (preset: MentionDateRangePreset) => {
-    const anchorDate = new Date();
-    if (preset === DATE_PRESET.MAXIMUM) {
-      onFiltersChange({ ...filters, date_from: undefined, date_to: undefined, mention_date_range_preset: DATE_PRESET.MAXIMUM });
-      return;
-    }
-    if (preset === DATE_PRESET.CUSTOM) {
-      onFiltersChange({ ...filters, mention_date_range_preset: DATE_PRESET.CUSTOM });
-      return;
-    }
-    if (preset in MENTION_ROLLING_PRESET_DAY_COUNTS) {
-      const range = getMentionDateRangeForMentionDateRangeRollingPreset(anchorDate, preset as MentionRollingDateRangePreset);
-      onFiltersChange({ ...filters, ...range, mention_date_range_preset: preset });
-    }
-  };
-
-  const handleDateFromChange = (rawValue: string) => {
-    const dateFrom = rawValue || undefined;
-    const bothMissing = !dateFrom && !filters.date_to;
+  const handleTrendChartGroupByOptionSelect = (nextValue: "day" | "week") => {
     onFiltersChange({
       ...filters,
-      date_from: dateFrom,
-      mention_date_range_preset: bothMissing ? DATE_PRESET.MAXIMUM : DATE_PRESET.CUSTOM,
+      group_by: nextValue === "day" ? undefined : "week",
     });
   };
 
-  const handleDateToChange = (rawValue: string) => {
-    const dateTo = rawValue || undefined;
-    const bothMissing = !filters.date_from && !dateTo;
-    onFiltersChange({
-      ...filters,
-      date_to: dateTo,
-      mention_date_range_preset: bothMissing ? DATE_PRESET.MAXIMUM : DATE_PRESET.CUSTOM,
-    });
-  };
-
-  const handleModelChange = (value: string | null) => {
-    if (value === null) return;
-    onFiltersChange({ ...filters, model: value === FACET.ALL ? undefined : (value as MentionFilters["model"]) });
-  };
-
-  const handleSentimentChange = (value: string | null) => {
-    if (value === null) return;
-    onFiltersChange({ ...filters, sentiment: value === FACET.ALL ? undefined : (value as MentionFilters["sentiment"]) });
-  };
-
-  const handleGroupByChange = (value: string | null) => {
-    if (value === null) return;
-    onFiltersChange({
-      ...filters,
-      group_by: value === "day" ? undefined : (value as MentionFilters["group_by"]),
-    });
-  };
-
-  const fieldLabelClasses = "block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5";
-  const inputContainerClasses =
-    "h-9 min-h-9 data-[size=default]:h-9 py-1 px-3 bg-muted/20 hover:bg-muted/40 transition-colors border-border/50";
-
-  const handleResetDashboardMentionFilters = () => {
-    onFiltersChange(
-      normalizeDashboardMentionFiltersAfterParse(
-        getDashboardBaselineMentionFilters(),
-        new Date()
-      )
-    );
-  };
+  const trendChartGroupBySelectedValue = filters.group_by ?? "day";
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end p-1">
@@ -123,7 +63,7 @@ export function TrendChartFilter({ filters, onFiltersChange }: TrendChartFilterP
         <div
           aria-hidden="true"
           className={cn(
-            fieldLabelClasses,
+            dashboardMentionFilterFieldLabelClasses,
             "opacity-0 select-none pointer-events-none"
           )}
         >
@@ -140,13 +80,13 @@ export function TrendChartFilter({ filters, onFiltersChange }: TrendChartFilterP
       </div>
 
       <div className="flex-1 min-w-[140px]">
-        <label className={fieldLabelClasses}>Date Range</label>
+        <label className={dashboardMentionFilterFieldLabelClasses}>Date Range</label>
         <Select
           value={mentionDateRangePresetSelectValue}
           onValueChange={(val) => { if (val) handleDatePresetChange(val as MentionDateRangePreset); }}
           itemToStringLabel={(value) => labelForValue(mentionFilterChoices.dateRange, value)}
         >
-          <SelectTrigger className={cn("w-full transition-all duration-200", inputContainerClasses)}>
+          <SelectTrigger className={cn("w-full transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -160,24 +100,24 @@ export function TrendChartFilter({ filters, onFiltersChange }: TrendChartFilterP
       {mentionDateRangePresetSelectValue === DATE_PRESET.CUSTOM && (
         <>
           <div className="flex-1 min-w-[140px]">
-            <label className={fieldLabelClasses}>From</label>
-            <Input type="date" className={cn("transition-all duration-200", inputContainerClasses)} value={filters.date_from ?? ""} onChange={(e) => handleDateFromChange(e.target.value)} />
+            <label className={dashboardMentionFilterFieldLabelClasses}>From</label>
+            <Input type="date" className={cn("transition-all duration-200", dashboardMentionFilterInputContainerClasses)} value={filters.date_from ?? ""} onChange={(e) => handleDateFromChange(e.target.value)} />
           </div>
           <div className="flex-1 min-w-[140px]">
-            <label className={fieldLabelClasses}>To</label>
-            <Input type="date" className={cn("transition-all duration-200", inputContainerClasses)} value={filters.date_to ?? ""} onChange={(e) => handleDateToChange(e.target.value)} />
+            <label className={dashboardMentionFilterFieldLabelClasses}>To</label>
+            <Input type="date" className={cn("transition-all duration-200", dashboardMentionFilterInputContainerClasses)} value={filters.date_to ?? ""} onChange={(e) => handleDateToChange(e.target.value)} />
           </div>
         </>
       )}
 
       <div className="flex-1 min-w-[140px]">
-        <label className={fieldLabelClasses}>Model Version</label>
+        <label className={dashboardMentionFilterFieldLabelClasses}>Model Version</label>
         <Select
           value={filters.model ?? FACET.ALL}
           onValueChange={handleModelChange}
           itemToStringLabel={(value) => labelForValue(mentionFilterChoices.model, value)}
         >
-          <SelectTrigger className={cn("w-full transition-all duration-200", inputContainerClasses)}>
+          <SelectTrigger className={cn("w-full transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -189,13 +129,13 @@ export function TrendChartFilter({ filters, onFiltersChange }: TrendChartFilterP
       </div>
 
       <div className="flex-1 min-w-[140px]">
-        <label className={fieldLabelClasses}>Result Sentiment</label>
+        <label className={dashboardMentionFilterFieldLabelClasses}>Result Sentiment</label>
         <Select
           value={filters.sentiment ?? FACET.ALL}
           onValueChange={handleSentimentChange}
           itemToStringLabel={(value) => labelForValue(mentionFilterChoices.sentiment, value)}
         >
-          <SelectTrigger className={cn("w-full transition-all duration-200", inputContainerClasses)}>
+          <SelectTrigger className={cn("w-full transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -207,21 +147,44 @@ export function TrendChartFilter({ filters, onFiltersChange }: TrendChartFilterP
       </div>
 
       <div className="flex-1 min-w-[140px]">
-        <label className={fieldLabelClasses}>Group By</label>
-        <Select
-          value={filters.group_by ?? "day"}
-          onValueChange={handleGroupByChange}
-          itemToStringLabel={(value) => labelForValue(mentionFilterChoices.groupBy, value)}
+        <label
+          id={trendChartFilterGroupByFieldLabelElementId}
+          className={dashboardMentionFilterFieldLabelClasses}
         >
-          <SelectTrigger className={cn("w-full transition-all duration-200", inputContainerClasses)}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {mentionFilterChoices.groupBy.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          Group By
+        </label>
+        <div
+          role="radiogroup"
+          aria-labelledby={trendChartFilterGroupByFieldLabelElementId}
+          className={cn(
+            "flex w-full rounded-lg border border-input",
+            "outline-none transition-all duration-200 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50",
+            dashboardMentionFilterInputContainerClasses,
+            "p-0.5 gap-0.5"
+          )}
+        >
+          {mentionFilterChoices.groupBy.map((opt) => {
+            const isSelected = trendChartGroupBySelectedValue === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                className={cn(
+                  "flex-1 rounded-md text-xs font-medium transition-colors outline-none select-none",
+                  "text-muted-foreground focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-0",
+                  isSelected && "bg-background text-foreground shadow-sm dark:bg-background"
+                )}
+                onClick={() =>
+                  handleTrendChartGroupByOptionSelect(opt.value as "day" | "week")
+                }
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {dateRangeOrderInvalid && (

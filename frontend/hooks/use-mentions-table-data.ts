@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import type { Mention, MentionFilters, MentionsResponse } from "@/models";
 import { brandMentionsApiService } from "@/services";
-import { mentionFiltersForApiRequestBody } from "@/lib/helpers/mention-filter-api";
+import { mentionFiltersForApiRequestBody } from "@/lib/helpers/mention-filters";
 import { DEFAULT_PAGE_SIZE } from "@/config";
 
 export type MentionsTableViewState =

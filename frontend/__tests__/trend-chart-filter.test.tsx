@@ -4,7 +4,7 @@ import { TrendChartFilter } from "@/components/trend-chart/trend-chart-filter";
 import {
   getDashboardBaselineMentionFilters,
   normalizeDashboardMentionFiltersAfterParse,
-} from "@/lib/helpers/mention-filter-default-date-range";
+} from "@/lib/helpers/mention-filters";
 import { DATE_PRESET } from "@/config";
 
 describe("TrendChartFilter", () => {

@@ -1,25 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import type { MentionFilters } from "@/models";
-import { isMentionDateRangeOrderInvalid } from "@/lib/helpers/mention-filter-api";
-import {
-  getDashboardBaselineMentionFilters,
-  getMentionDateRangeForMentionDateRangeRollingPreset,
-  mentionFiltersShallowEqualForDashboard,
-  normalizeDashboardMentionFiltersAfterParse,
-} from "@/lib/helpers/mention-filter-default-date-range";
 import {
   DATE_PRESET,
   MENTION_FILTER_INVALID_DATE_RANGE_MESSAGE,
-  MENTION_ROLLING_PRESET_DAY_COUNTS,
   MENTIONED_VALUE,
   mentionFilterChoices,
   FACET,
 } from "@/config";
-import type { MentionDateRangePreset, MentionRollingDateRangePreset } from "@/config";
-import { labelForValue } from "@/lib/helpers/mention-filter-label-helpers";
+import type { MentionDateRangePreset } from "@/config";
+import { labelForValue } from "@/lib/helpers/choice-display-label";
+import { mentionFiltersShallowEqualForDashboard } from "@/lib/helpers/mention-filters";
 
 import {
   Select,
@@ -31,6 +23,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { DashboardBodyText } from "@/components/ui/typography";
 import { MentionFiltersResetIconButton } from "@/components/mention-filters/mention-filters-reset-icon-button";
+import {
+  dashboardMentionFilterFieldLabelClasses,
+  dashboardMentionFilterInputContainerClasses,
+  useDashboardMentionFilterSharedHandlers,
+} from "@/components/mention-filters/use-dashboard-mention-filter-shared-handlers";
 
 export interface MentionsTableFilterProps {
   filters: MentionFilters;
@@ -38,81 +35,21 @@ export interface MentionsTableFilterProps {
 }
 
 export function MentionsTableFilter({ filters, onFiltersChange }: MentionsTableFilterProps) {
-  const normalizedDashboardBaselineMentionFilters = useMemo(
-    () =>
-      normalizeDashboardMentionFiltersAfterParse(
-        getDashboardBaselineMentionFilters(),
-        new Date()
-      ),
-    []
-  );
-
-  const dateRangeOrderInvalid = isMentionDateRangeOrderInvalid(filters);
-  const mentionDateRangePresetSelectValue =
-    (filters.mention_date_range_preset ?? DATE_PRESET.MAXIMUM) as MentionDateRangePreset;
-
-  const handleDatePresetChange = (preset: MentionDateRangePreset) => {
-    const anchorDate = new Date();
-    if (preset === DATE_PRESET.MAXIMUM) {
-      onFiltersChange({ ...filters, date_from: undefined, date_to: undefined, mention_date_range_preset: DATE_PRESET.MAXIMUM });
-      return;
-    }
-    if (preset === DATE_PRESET.CUSTOM) {
-      onFiltersChange({ ...filters, mention_date_range_preset: DATE_PRESET.CUSTOM });
-      return;
-    }
-    if (preset in MENTION_ROLLING_PRESET_DAY_COUNTS) {
-      const range = getMentionDateRangeForMentionDateRangeRollingPreset(anchorDate, preset as MentionRollingDateRangePreset);
-      onFiltersChange({ ...filters, ...range, mention_date_range_preset: preset });
-    }
-  };
-
-  const handleDateFromChange = (rawValue: string) => {
-    const dateFrom = rawValue || undefined;
-    const bothMissing = !dateFrom && !filters.date_to;
-    onFiltersChange({
-      ...filters,
-      date_from: dateFrom,
-      mention_date_range_preset: bothMissing ? DATE_PRESET.MAXIMUM : DATE_PRESET.CUSTOM,
-    });
-  };
-
-  const handleDateToChange = (rawValue: string) => {
-    const dateTo = rawValue || undefined;
-    const bothMissing = !filters.date_from && !dateTo;
-    onFiltersChange({
-      ...filters,
-      date_to: dateTo,
-      mention_date_range_preset: bothMissing ? DATE_PRESET.MAXIMUM : DATE_PRESET.CUSTOM,
-    });
-  };
-
-  const handleModelChange = (value: string | null) => {
-    if (value === null) return;
-    onFiltersChange({ ...filters, model: value === FACET.ALL ? undefined : (value as MentionFilters["model"]) });
-  };
-
-  const handleSentimentChange = (value: string | null) => {
-    if (value === null) return;
-    onFiltersChange({ ...filters, sentiment: value === FACET.ALL ? undefined : (value as MentionFilters["sentiment"]) });
-  };
+  const {
+    normalizedDashboardBaselineMentionFilters,
+    dateRangeOrderInvalid,
+    mentionDateRangePresetSelectValue,
+    handleDatePresetChange,
+    handleDateFromChange,
+    handleDateToChange,
+    handleModelChange,
+    handleSentimentChange,
+    handleResetDashboardMentionFilters,
+  } = useDashboardMentionFilterSharedHandlers({ filters, onFiltersChange });
 
   const handleMentionedChange = (value: string | null) => {
     if (value === null) return;
     onFiltersChange({ ...filters, mentioned: value === FACET.ALL ? undefined : value === MENTIONED_VALUE.YES });
-  };
-
-  const fieldLabelClasses = "block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5";
-  const inputContainerClasses =
-    "h-9 min-h-9 data-[size=default]:h-9 py-1 px-3 bg-muted/20 hover:bg-muted/40 transition-colors border-border/50";
-
-  const handleResetDashboardMentionFilters = () => {
-    onFiltersChange(
-      normalizeDashboardMentionFiltersAfterParse(
-        getDashboardBaselineMentionFilters(),
-        new Date()
-      )
-    );
   };
 
   return (
@@ -121,7 +58,7 @@ export function MentionsTableFilter({ filters, onFiltersChange }: MentionsTableF
         <div
           aria-hidden="true"
           className={cn(
-            fieldLabelClasses,
+            dashboardMentionFilterFieldLabelClasses,
             "opacity-0 select-none pointer-events-none"
           )}
         >
@@ -138,13 +75,13 @@ export function MentionsTableFilter({ filters, onFiltersChange }: MentionsTableF
       </div>
 
       <div className="flex-1 min-w-[140px]">
-        <label className={fieldLabelClasses}>Date Range</label>
+        <label className={dashboardMentionFilterFieldLabelClasses}>Date Range</label>
         <Select
           value={mentionDateRangePresetSelectValue}
           onValueChange={(val) => { if (val) handleDatePresetChange(val as MentionDateRangePreset); }}
           itemToStringLabel={(value) => labelForValue(mentionFilterChoices.dateRange, value)}
         >
-          <SelectTrigger className={cn("w-full transition-all duration-200", inputContainerClasses)}>
+          <SelectTrigger className={cn("w-full transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -158,24 +95,24 @@ export function MentionsTableFilter({ filters, onFiltersChange }: MentionsTableF
       {mentionDateRangePresetSelectValue === DATE_PRESET.CUSTOM && (
         <>
           <div className="flex-1 min-w-[140px]">
-            <label className={fieldLabelClasses}>From</label>
-            <Input type="date" className={cn("transition-all duration-200", inputContainerClasses)} value={filters.date_from ?? ""} onChange={(e) => handleDateFromChange(e.target.value)} />
+            <label className={dashboardMentionFilterFieldLabelClasses}>From</label>
+            <Input type="date" className={cn("transition-all duration-200", dashboardMentionFilterInputContainerClasses)} value={filters.date_from ?? ""} onChange={(e) => handleDateFromChange(e.target.value)} />
           </div>
           <div className="flex-1 min-w-[140px]">
-            <label className={fieldLabelClasses}>To</label>
-            <Input type="date" className={cn("transition-all duration-200", inputContainerClasses)} value={filters.date_to ?? ""} onChange={(e) => handleDateToChange(e.target.value)} />
+            <label className={dashboardMentionFilterFieldLabelClasses}>To</label>
+            <Input type="date" className={cn("transition-all duration-200", dashboardMentionFilterInputContainerClasses)} value={filters.date_to ?? ""} onChange={(e) => handleDateToChange(e.target.value)} />
           </div>
         </>
       )}
 
       <div className="flex-1 min-w-[140px]">
-        <label className={fieldLabelClasses}>Model Version</label>
+        <label className={dashboardMentionFilterFieldLabelClasses}>Model Version</label>
         <Select
           value={filters.model ?? FACET.ALL}
           onValueChange={handleModelChange}
           itemToStringLabel={(value) => labelForValue(mentionFilterChoices.model, value)}
         >
-          <SelectTrigger className={cn("w-full transition-all duration-200", inputContainerClasses)}>
+          <SelectTrigger className={cn("w-full transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -187,13 +124,13 @@ export function MentionsTableFilter({ filters, onFiltersChange }: MentionsTableF
       </div>
 
       <div className="flex-1 min-w-[140px]">
-        <label className={fieldLabelClasses}>Result Sentiment</label>
+        <label className={dashboardMentionFilterFieldLabelClasses}>Result Sentiment</label>
         <Select
           value={filters.sentiment ?? FACET.ALL}
           onValueChange={handleSentimentChange}
           itemToStringLabel={(value) => labelForValue(mentionFilterChoices.sentiment, value)}
         >
-          <SelectTrigger className={cn("w-full transition-all duration-200", inputContainerClasses)}>
+          <SelectTrigger className={cn("w-full transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -205,13 +142,13 @@ export function MentionsTableFilter({ filters, onFiltersChange }: MentionsTableF
       </div>
 
       <div className="flex-1 min-w-[140px]">
-        <label className={fieldLabelClasses}>Was Mentioned?</label>
+        <label className={dashboardMentionFilterFieldLabelClasses}>Was Mentioned?</label>
         <Select
           value={filters.mentioned === true ? MENTIONED_VALUE.YES : filters.mentioned === false ? MENTIONED_VALUE.NO : FACET.ALL}
           onValueChange={handleMentionedChange}
           itemToStringLabel={(value) => labelForValue(mentionFilterChoices.mentioned, value)}
         >
-          <SelectTrigger className={cn("w-full transition-all duration-200", inputContainerClasses)}>
+          <SelectTrigger className={cn("w-full transition-all duration-200", dashboardMentionFilterInputContainerClasses)}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

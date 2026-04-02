@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { MentionFilters, TrendPoint } from "@/models";
-import { TrendChart } from "@/components/trend-chart";
-import { mentionFiltersToSortedQueryString } from "@/lib/helpers/mention-filters-url";
+import { TrendChart } from "@/components/trend-chart/trend-chart";
+import { mentionFiltersToSortedQueryString } from "@/lib/helpers/mention-filters";
 import { brandMentionsApiService } from "@/services";
 import { toast } from "sonner";
 
@@ -128,6 +128,53 @@ describe("TrendChart", () => {
     render(<TrendChart />);
     expect(screen.getByText("Date Range")).toBeInTheDocument();
     expect(screen.getByText("Group By")).toBeInTheDocument();
+    expect(screen.getByRole("radiogroup", { name: "Group By" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Day" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: "Week" })).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("checks week radio when chart_group_by is in the URL", () => {
+    navigationMocks.searchParamsString = mentionFiltersToSortedQueryString(
+      {
+        group_by: "week",
+        mention_date_range_preset: "maximum",
+      },
+      "chart_"
+    );
+
+    useTrendsMock.mockReturnValue({
+      data: { data: sampleTrends },
+      error: undefined,
+      isLoading: false,
+      isValidating: false,
+      mutate: vi.fn(),
+    } as ReturnType<typeof brandMentionsApiService.useTrends>);
+
+    render(<TrendChart />);
+
+    expect(screen.getByRole("radio", { name: "Week" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: "Day" })).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("sets chart_group_by in the URL when week radio is chosen", async () => {
+    useTrendsMock.mockReturnValue({
+      data: { data: sampleTrends },
+      error: undefined,
+      isLoading: false,
+      isValidating: false,
+      mutate: vi.fn(),
+    } as ReturnType<typeof brandMentionsApiService.useTrends>);
+
+    render(<TrendChart />);
+
+    fireEvent.click(screen.getByRole("radio", { name: "Week" }));
+
+    await waitFor(() => {
+      expect(navigationMocks.replace).toHaveBeenCalled();
+    });
+
+    const lastReplaceUrl = navigationMocks.replace.mock.calls.at(-1)?.[0] as string;
+    expect(lastReplaceUrl).toContain("chart_group_by=week");
   });
 
   it("shows empty message when data is empty", () => {

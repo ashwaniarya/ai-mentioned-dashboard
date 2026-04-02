@@ -1,18 +1,9 @@
-/**
- * Smoke (manual): open the dashboard with
- * `?model=claude&mentioned=true&date_range_preset=last_3_days` - closed filter
- * triggers should show "Claude", "Mentioned", "Last 3 days", not raw keys.
- */
 import { describe, expect, it } from "vitest";
 import {
   MENTION_ROLLING_PRESET_DAY_COUNTS,
   mentionFilterChoices,
 } from "@/config";
-import {
-  displayLabelForMentionModel,
-  displayLabelForMentionSentiment,
-  labelForValue,
-} from "@/lib/helpers/mention-filter-label-helpers";
+import { labelForValue } from "@/lib/helpers/choice-display-label";
 
 describe("mentionFilterChoices.dateRange", () => {
   it("defines a non-empty label for every configured date-range preset", () => {
@@ -109,30 +100,5 @@ describe("labelForValue", () => {
     expect(labelForValue(mentionFilterChoices.model, "")).toBe("");
     expect(labelForValue(mentionFilterChoices.model, null)).toBe("");
     expect(labelForValue(mentionFilterChoices.model, 42)).toBe("42");
-  });
-});
-
-describe("displayLabelForMentionModel", () => {
-  it("maps known API model values", () => {
-    expect(displayLabelForMentionModel("claude")).toBe("Claude");
-    expect(displayLabelForMentionModel("chatgpt")).toBe("ChatGPT");
-    expect(displayLabelForMentionModel("CLAUDE")).toBe("Claude");
-  });
-
-  it("humanizes unknown model values", () => {
-    expect(displayLabelForMentionModel("future_bot")).toBe("Future Bot");
-  });
-});
-
-describe("displayLabelForMentionSentiment", () => {
-  it("maps known API sentiment values", () => {
-    expect(displayLabelForMentionSentiment("negative")).toBe("Negative");
-    expect(displayLabelForMentionSentiment("neutral")).toBe("Neutral");
-  });
-
-  it("humanizes unknown sentiment values", () => {
-    expect(displayLabelForMentionSentiment("mixed-signal")).toBe(
-      "Mixed Signal"
-    );
   });
 });

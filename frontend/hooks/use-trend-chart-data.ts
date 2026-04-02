@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import type { MentionFilters, TrendPoint } from "@/models";
 import { brandMentionsApiService } from "@/services";
-import { mentionFiltersForApiRequestBody } from "@/lib/helpers/mention-filter-api";
+import { mentionFiltersForApiRequestBody } from "@/lib/helpers/mention-filters";
 
 export type TrendChartViewState =
   | { status: "loading"; points: TrendPoint[] }

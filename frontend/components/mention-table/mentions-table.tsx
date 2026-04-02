@@ -4,9 +4,14 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MENTION_FILTER_DEBOUNCE_INTERVAL_MS } from "@/config";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { buildMentionFiltersForApi } from "@/lib/helpers/mention-filter-api";
-import { normalizeDashboardMentionFiltersAfterParse, mentionFiltersShallowEqualForDashboard } from "@/lib/helpers/mention-filter-default-date-range";
-import { parseMentionFiltersFromSearchParams, mentionFiltersToSortedQueryString, writeMentionFiltersToSearchParams } from "@/lib/helpers/mention-filters-url";
+import {
+  buildMentionFiltersForApi,
+  mentionFiltersShallowEqualForDashboard,
+  mentionFiltersToSortedQueryString,
+  normalizeDashboardMentionFiltersAfterParse,
+  parseMentionFiltersFromSearchParams,
+  writeMentionFiltersToSearchParams,
+} from "@/lib/helpers/mention-filters";
 import { MentionsTableFilter } from "@/components/mention-table/mentions-table-filter";
 
 import {
@@ -49,7 +54,7 @@ import {
   useMentionsTableData,
   type MentionsTableViewState,
 } from "@/hooks/use-mentions-table-data";
-import { displayLabelForMentionSentiment } from "@/lib/helpers/mention-filter-label-helpers";
+import { displayLabelForMentionSentiment } from "@/components/mention-table/mention-table-display-labels";
 import { cn } from "@/lib/utils";
 
 // ── Column definitions (module-level, no per-render cost) ─────────────

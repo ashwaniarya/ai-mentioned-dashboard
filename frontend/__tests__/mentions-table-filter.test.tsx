@@ -4,7 +4,7 @@ import { MentionsTableFilter } from "@/components/mention-table/mentions-table-f
 import {
   getDashboardBaselineMentionFilters,
   normalizeDashboardMentionFiltersAfterParse,
-} from "@/lib/helpers/mention-filter-default-date-range";
+} from "@/lib/helpers/mention-filters";
 import { DATE_PRESET } from "@/config";
 
 describe("MentionsTableFilter", () => {
